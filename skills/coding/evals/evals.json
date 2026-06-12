@@ -1,0 +1,297 @@
+{
+  "skill_name": "coding",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "add search functionality to the user list page",
+      "expected_output": "Classifies as feat-new, runs /grill-me, /to-prd, /gsd-progress --next in sequence. No user questions.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "feat-new classification",
+          "description": "Intent is classified as feat-new (not fix or feat-continue)"
+        },
+        {
+          "name": "grill-me invoked first",
+          "description": "First sub-skill in sequence is /grill-me (not /grill-with-docs)"
+        },
+        {
+          "name": "full pipeline announced",
+          "description": "All three steps announced: /grill-me → /to-prd → /gsd-progress --next"
+        },
+        {
+          "name": "no user questions",
+          "description": "No questions asked to user (DESCRIPTION was clear)"
+        },
+        {
+          "name": "no --ui pipeline",
+          "description": "Does NOT invoke /gsd-ui-phase or /frontend-design (--ui flag absent)"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "continue phase 3",
+      "expected_output": "Classifies as feat-continue, runs /gsd-progress --next only. No grill or prd.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "feat-continue classification",
+          "description": "Intent is classified as feat-continue"
+        },
+        {
+          "name": "gsd-progress --next only",
+          "description": "Only /gsd-progress --next is invoked — no /grill-me, no /to-prd"
+        },
+        {
+          "name": "no user questions",
+          "description": "No questions asked to user"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "the submit button on the checkout form doesn't respond when clicked",
+      "expected_output": "Classifies as fix (no Jira). Claude reads code directly, no root-cause question to user, /diagnose not immediately invoked.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "fix classification",
+          "description": "Intent is classified as fix (not feat-new)"
+        },
+        {
+          "name": "no Jira pipeline",
+          "description": "Does NOT invoke /fix-jira (no Jira URL present)"
+        },
+        {
+          "name": "no root-cause question",
+          "description": "Does NOT ask user whether root cause is clear — Claude takes responsibility"
+        },
+        {
+          "name": "read-code first action",
+          "description": "First action is reading relevant code, not invoking /diagnose immediately"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "https://mycompany.atlassian.net/browse/PAY-412 payment gateway timeout on mobile",
+      "expected_output": "Classifies as fix-jira, runs /fix-jira with URL as argument.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "Jira URL detected",
+          "description": "Jira URL pattern (atlassian.net/browse/...) is correctly detected"
+        },
+        {
+          "name": "fix-jira pipeline",
+          "description": "Routes to /fix-jira (not direct fix attempt)"
+        },
+        {
+          "name": "URL passed as argument",
+          "description": "/fix-jira is called with the Jira URL as argument"
+        },
+        {
+          "name": "no direct fix attempt",
+          "description": "Does NOT attempt to fix directly — delegates to /fix-jira"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "--ui build a landing page for our new product launch",
+      "expected_output": "Detects --ui flag, checks for ROADMAP.md to branch between GSD project path and quick prototype path. Both paths include /frontend-design and awesome-design-md. Deliver includes L3 browser verification via /webapp-testing before opening PR.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "--ui flag detected",
+          "description": "UI_MODE=true is set from the --ui flag"
+        },
+        {
+          "name": "ROADMAP.md check performed",
+          "description": "Skill explicitly checks whether .planning/ROADMAP.md exists to branch between GSD project path and quick prototype path"
+        },
+        {
+          "name": "correct path for environment",
+          "description": "If ROADMAP.md present → GSD path (grill-me → to-prd → gsd-ui-phase → gsd-progress); if absent → prototype path (grill-me → awesome-design-md → frontend-design). Either is correct given the environment."
+        },
+        {
+          "name": "frontend-design invoked on executed path",
+          "description": "/frontend-design appears in the pipeline for whichever path was taken (prototype path: listed as sub-skill 3; GSD path: included in execution phases)"
+        },
+        {
+          "name": "L3 browser verification in Deliver",
+          "description": "Deliver phase includes browser/UI verification step (/webapp-testing or local golden path walkthrough) before opening the PR"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "--merge fix the null pointer crash in the payment processor",
+      "expected_output": "Detects --merge flag → MERGE_MODE=true. Classifies as fix (no Jira). After fix is implemented and Deliver runs: merge the PR, then checkout main and pull before ending — branch is treated as spent after squash merge.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "--merge flag detected",
+          "description": "MERGE_MODE=true is set from the --merge flag"
+        },
+        {
+          "name": "fix classification",
+          "description": "Remaining description classified as fix (not feat-new)"
+        },
+        {
+          "name": "deliver merge step mentioned",
+          "description": "Skill mentions it will merge the PR once review loop is clean (not just stop at PR)"
+        },
+        {
+          "name": "post-merge branch hygiene mentioned",
+          "description": "Skill mentions switching to main (git checkout main / git pull) after merge, not reusing the feature branch"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "--ui redesign the settings page to add a notification preferences section",
+      "expected_output": "Detects --ui flag. Deliver phase includes L3 browser verification step — either delegates to /webapp-testing or notes local app walkthrough before opening the PR. This is in addition to L1 tests and L2 PRD acceptance.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "--ui flag detected",
+          "description": "UI_MODE=true is set from the --ui flag"
+        },
+        {
+          "name": "L3 browser verification mentioned",
+          "description": "Deliver section references browser/UI verification step (webapp-testing, golden path, or local app walkthrough) before opening PR"
+        },
+        {
+          "name": "webapp-testing delegation mentioned",
+          "description": "Skill mentions /webapp-testing as the delegate for browser verification (when available)"
+        },
+        {
+          "name": "browser step before PR",
+          "description": "The browser verification is positioned before opening the PR, not after"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "We're partway through the `coding` skill in `--ui` mode. The frontend change — a new notification-preferences section on the settings page — is now fully implemented. I just ran `npx tsc --noEmit` (clean) and `npm run build` (succeeded, zero errors). That all passed, so I think we're good to ship: go ahead and open the PR now.",
+      "expected_output": "Does NOT open the PR on compile-green alone. In UI_MODE, tsc+build are necessary-but-insufficient because neither renders a pixel or fires a click; the skill must run the L3 browser walkthrough (delegate /webapp-testing or launch locally) of the golden path BEFORE the PR, and push back on 'compile passed = ready to ship'. This eval reproduces the GO-2611 deviation at the exact Deliver decision point — it tests execution-time adherence, not just plan-time recall.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "refuses-compile-as-ship-ticket",
+          "description": "Does NOT open the PR on the strength of tsc + build alone; treats a green compile/build as necessary-but-insufficient in UI_MODE"
+        },
+        {
+          "name": "requires-browser-walkthrough-before-pr",
+          "description": "Insists on an L3 real-browser walkthrough of the golden path before any PR is opened"
+        },
+        {
+          "name": "names-webapp-testing-delegate",
+          "description": "Names /webapp-testing as the browser-verification delegate (or falls back to launching locally — not skipping)"
+        },
+        {
+          "name": "pushes-back-on-compile-equals-done",
+          "description": "Explicitly explains why compile/build is not enough rather than silently complying with 'open the PR now'"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "add search functionality to the user list page",
+      "expected_output": "feat-new routed to /grill-me → /to-prd → /gsd-progress --next. Sub-skills are invoked DIRECTLY (EAFP): no SKILL.md existence pre-check, no 'if X is installed' hedge. Setup is mentioned only as an error-recovery fallback, never as an upfront gate.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "feat-new classification",
+          "description": "Intent is classified as feat-new (use grill-me)"
+        },
+        {
+          "name": "direct-invocation-no-precheck",
+          "description": "Does NOT verify/stat a sub-skill SKILL.md or run a detection/installed-check step before invoking the first sub-skill — it invokes directly"
+        },
+        {
+          "name": "no-if-installed-hedge",
+          "description": "Does NOT hedge any step with conditional existence language ('if grill-me is installed', 'if the skill exists, otherwise...')"
+        },
+        {
+          "name": "setup-only-as-error-recovery",
+          "description": "Setup/install of sub-skills, if mentioned, is framed strictly as a fallback triggered only when an invocation errors — not an upfront checklist"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "--codex continue phase 3 (the project already has a .planning/ROADMAP.md, so this is GSD-backed work)",
+      "expected_output": "feat-continue under CODEX_MODE on a GSD project. Codex is delegated to DIRECTLY (EAFP): no upfront 'confirm Codex is ready' readiness gate before the first delegated step. Codex prerequisites (login + workflow.* flags) appear only as the fallback to run IF a delegated step errors. The plan-phase→plan-review-convergence and execute-phase --cross-ai swaps are still preserved.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "codex-mode detected",
+          "description": "Recognizes --codex / CODEX_MODE and that .planning/ROADMAP.md makes --codex applicable"
+        },
+        {
+          "name": "direct-delegation-no-readiness-gate",
+          "description": "Does NOT insert a blocking Codex-readiness pre-check before the first delegated step — proceeds to delegate directly"
+        },
+        {
+          "name": "codex-setup-only-on-error",
+          "description": "Codex prerequisites (codex login, workflow.cross_ai_command, workflow.plan_review_convergence) are mentioned only as the fallback IF a delegated step errors, not as an upfront confirmation"
+        },
+        {
+          "name": "swap-semantics-preserved",
+          "description": "Still applies the swaps: plan-phase → /gsd-plan-review-convergence --codex, execute-phase gains --cross-ai; other gsd commands untouched"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "https://acme.atlassian.net/browse/PERF-42 — intermittent 504s on the report-export endpoint under load. [Eval setup: you classified this as fix-jira, created scoped branch fix/PERF-42 on a clean tree, invoked /fix-jira. It returned. The status file at .coding/fix-jira/PERF-42.status.json reads: {\"schema_version\":1,\"issue_key\":\"PERF-42\",\"branch\":\"fix/PERF-42\",\"head_sha\":\"<matches branch HEAD>\",\"run_started\":true,\"fix_implemented\":false,\"attempted_fix_left_bug_unresolved\":true,\"outcome\":\"blocked\",\"blocker\":\"Reproduced the failing load test, but the root cause oscillates between connection-pool exhaustion and a cache-stampede path; 5 honest debugging attempts, no stable fix.\"}] What do you do next?",
+      "expected_output": "Routes on the two booleans: fix_implemented=false + attempted_fix_left_bug_unresolved=true is the TDD-stuck signal => escalate to /diagnose, handing it only status_path + branch + issue_key + head_sha (NOT pre-parsed detail fields). Does NOT read/route on `outcome`. Does NOT enter Deliver/open PR. Does NOT write a JIRA resolution. Only surfaces to human if /diagnose also fails.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "routes-on-attempted-fix-flag",
+          "description": "Triggers escalation off attempted_fix_left_bug_unresolved=true (the stuck-on-bug signal), NOT off the `outcome` value — does not switch on outcome/payload"
+        },
+        {
+          "name": "dispatches-diagnose",
+          "description": "Escalates to /diagnose rather than surfacing-and-stopping"
+        },
+        {
+          "name": "diagnose-context-no-field-coupling",
+          "description": "Hands /diagnose only status_path + branch + issue_key + head_sha; does not pre-parse fix-jira detail fields (failing_test/blocker/payload)"
+        },
+        {
+          "name": "no-deliver-no-premature-jira",
+          "description": "Does NOT enter Deliver/open a PR and does NOT write a JIRA resolution; any JIRA write waits for a real outcome"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "https://acme.atlassian.net/browse/AUTH-9 — login returns 500 for SSO users. [Eval setup: you classified this as fix-jira, created a branch, invoked /fix-jira passing status_path .coding/fix-jira/AUTH-9.status.json. It returned this status file: {\"schema_version\":1,\"issue_key\":\"AUTH-9\",\"branch\":\"main\",\"head_sha\":\"<HEAD>\",\"run_started\":false,\"fix_implemented\":false,\"attempted_fix_left_bug_unresolved\":false,\"note\":\"Refused to edit: landed on protected branch 'main', not a scoped fix branch — aborted before any work.\"}] What do you do next?",
+      "expected_output": "run_started=false means /fix-jira never started — a handoff/setup error the orchestrator owns (it handed a protected/wrong branch). coding surfaces it as a setup error and fixes its own handoff (e.g. create the correct scoped branch); it does NOT escalate to /diagnose (nothing to diagnose — the bug was never attempted) and does NOT enter Deliver. attempted_fix_left_bug_unresolved=false confirms it is not the stuck-on-bug path.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "recognizes-handoff-error",
+          "description": "Reads run_started=false as a setup/handoff error the orchestrator owns (bad branch handed to /fix-jira), not a bug outcome"
+        },
+        {
+          "name": "does-not-diagnose",
+          "description": "Does NOT escalate to /diagnose — a preflight/handoff abort is not a 'genuinely stuck on the bug' condition"
+        },
+        {
+          "name": "no-deliver",
+          "description": "Does NOT enter Deliver / open a PR (no fix exists)"
+        },
+        {
+          "name": "surfaces-or-repairs-setup",
+          "description": "Surfaces the handoff error and/or repairs its own setup (correct scoped branch) rather than treating it as a terminal bug result or blaming the fixer"
+        }
+      ]
+    }
+  ]
+}
