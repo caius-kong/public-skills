@@ -727,7 +727,7 @@
     },
     {
       "id": 31,
-      "prompt": "[Eval setup: you are at Deliver step 3 — the PR is open. You have both the Skill tool (SlashCommand) and the Agent tool available. You are about to invoke the copilot-pr-review-loop. Describe EXACTLY: (a) which Claude Code tool you call — Skill/SlashCommand or Agent?, (b) why that specific tool (not the other one)?, (c) what you pass to it?] fix the null pointer crash in the payment processor",
+      "prompt": "[Eval setup: --copilot is active. You are at Deliver step 3 — the PR is open. You have both the Skill tool (SlashCommand) and the Agent tool available. You are about to invoke the copilot-pr-review-loop. Describe EXACTLY: (a) which Claude Code tool you call — Skill/SlashCommand or Agent?, (b) why that specific tool (not the other one)?, (c) what you pass to it?] --copilot fix the null pointer crash in the payment processor",
       "expected_output": "Uses the Agent tool (NOT the Skill/SlashCommand tool). Reason: Sub-skill Execution Contracts specifies copilot-pr-review-loop runs as a fresh-context Agent so that triage, fixes, and test output stay out of the main context. Agent invocation includes the copilot-pr-review-loop skill instructions. Explicitly contrasts against Skill/SlashCommand and explains why Agent is correct here.",
       "files": [],
       "assertions": [
@@ -770,6 +770,63 @@
         {
           "name": "no-pre-check-gate-on-happy-path",
           "description": "The pipeline entry point does NOT add a pre-check gate ('if grill-me exists, run it') — the fallback only activates on actual invocation failure"
+        }
+      ]
+    }
+    ,
+    {
+      "id": 33,
+      "prompt": "fix the null pointer crash in UserService",
+      "expected_output": "No --copilot flag → COPILOT_MODE=false. Deliver step 3 is skipped. Skill stops at a clean, ready-to-merge PR without running the Copilot review loop. PR is still opened, scope/provenance gate still runs.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Response does NOT plan to spawn copilot-pr-review-loop (review loop absent or explicitly skipped)",
+          "name": "no_copilot_loop_without_flag"
+        },
+        {
+          "text": "Skill still plans to open a PR and run local acceptance (not broken by absence of --copilot)",
+          "name": "pr_still_opened"
+        },
+        {
+          "text": "Response does NOT imply Copilot review is required or expected when --copilot is absent",
+          "name": "no_implicit_copilot_requirement"
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "prompt": "--copilot fix the null pointer crash in UserService",
+      "expected_output": "--copilot flag → COPILOT_MODE=true. Deliver step 3 plans to spawn copilot-pr-review-loop via Agent tool. Scope/provenance gate still runs after review loop is clean.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Response mentions spawning or invoking copilot-pr-review-loop (or Copilot review loop) as part of Deliver",
+          "name": "copilot_loop_triggered"
+        },
+        {
+          "text": "Copilot review loop is described as an Agent call (fresh context), not inline Skill",
+          "name": "agent_not_inline"
+        },
+        {
+          "text": "Response parses --copilot and sets COPILOT_MODE=true (or equivalent language)",
+          "name": "flag_parsed"
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "prompt": "--merge fix the auth token expiry bug",
+      "expected_output": "MERGE_MODE=true but COPILOT_MODE=false (no --copilot). After PR is opened and scope/provenance gate passes, skill proceeds directly to merge WITHOUT running the Copilot review loop first.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Response does NOT spawn copilot-pr-review-loop (COPILOT_MODE false because --copilot absent)",
+          "name": "no_copilot_without_flag"
+        },
+        {
+          "text": "Response acknowledges MERGE_MODE (plans to auto-merge) and merge path does not depend on Copilot review",
+          "name": "merge_without_copilot_review"
         }
       ]
     }
