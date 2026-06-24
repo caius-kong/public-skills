@@ -22,7 +22,7 @@ Then restart Claude Code to pick up the new skills.
 ## Skills
 
 - [coding](skills/coding/): Single entry point for the standard development workflow.
-- [fix-jira](skills/fix-jira/): Use when a JIRA bug ticket (URL or issue key) needs root-cause investigation and a fix.
-- [copilot-pr-review-loop](skills/copilot-pr-review-loop/): Use when a PR needs iterative Copilot review cycles — after pushing commits, when Copilot review needs triggering or re-triggering, or when fixing Copilot feedback before re-submitting for another review round.
+  - [fix-jira](skills/fix-jira/): Sub-skill of `coding` — Use when a JIRA bug ticket (URL or issue key) needs root-cause investigation and a fix.
+  - [copilot-pr-review-loop](skills/copilot-pr-review-loop/): Sub-skill of `coding` — Use when a PR needs iterative Copilot review cycles — after pushing commits, when Copilot review needs triggering or re-triggering, or when fixing Copilot feedback before re-submitting for another review round.
 
 <!-- skills-list-end -->
