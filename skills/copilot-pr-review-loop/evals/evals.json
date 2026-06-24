@@ -1,0 +1,122 @@
+{
+  "skill_name": "copilot-pr-review-loop",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm running the copilot PR review loop on PR #42, and Copilot keeps returning a 502 error every time I trigger a review — it's happened 4 times now. Tests are passing but I can't get a new Copilot review at all. What should the loop do?",
+      "expected_output": "The loop should output the ⛔ LOOP BLOCKED human-readable block with reason (Copilot API returning 502), last attempted operation, and suggested action for the user. It should NOT commit, push, or close the PR. No machine-readable COPILOT_LOOP_RESULT token should appear.",
+      "assertions": [
+        {
+          "name": "no_machine_readable_token",
+          "description": "Response does NOT contain any 'COPILOT_LOOP_RESULT:' machine-readable token",
+          "type": "not_contains",
+          "value": "COPILOT_LOOP_RESULT:"
+        },
+        {
+          "name": "outputs_loop_blocked_human_marker",
+          "description": "Response contains '⛔ LOOP BLOCKED' human-readable marker",
+          "type": "contains",
+          "value": "⛔ LOOP BLOCKED"
+        },
+        {
+          "name": "includes_reason_field",
+          "description": "Response includes 'Reason:' field",
+          "type": "contains",
+          "value": "Reason:"
+        },
+        {
+          "name": "includes_last_attempted_field",
+          "description": "Response includes 'Last attempted:' field",
+          "type": "contains",
+          "value": "Last attempted:"
+        },
+        {
+          "name": "includes_suggested_action_field",
+          "description": "Response includes 'Suggested action:' field",
+          "type": "contains",
+          "value": "Suggested action:"
+        },
+        {
+          "name": "no_commit_push",
+          "description": "Response does NOT suggest committing or pushing",
+          "type": "not_contains",
+          "value": "git push"
+        },
+        {
+          "name": "not_abandonment_signal",
+          "description": "Response does NOT confuse blocked with abandonment — no ABANDONMENT SIGNAL marker",
+          "type": "not_contains",
+          "value": "⛔ ABANDONMENT SIGNAL"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The copilot review loop is running on PR #88. Copilot found 3 Criticals all pointing to the same wrong data model — every fix I make just spawns a new Critical in a different file using the same wrong assumption. What should happen?",
+      "expected_output": "This is a design flaw, not an infrastructure problem. The loop should output ⛔ ABANDONMENT SIGNAL (not LOOP BLOCKED), identifying the shared root cause pattern and recommending closing the PR to revisit the approach. No machine-readable COPILOT_LOOP_RESULT token should appear.",
+      "assertions": [
+        {
+          "name": "no_machine_readable_token",
+          "description": "Response does NOT contain any 'COPILOT_LOOP_RESULT:' machine-readable token",
+          "type": "not_contains",
+          "value": "COPILOT_LOOP_RESULT:"
+        },
+        {
+          "name": "outputs_abandonment_signal_human_marker",
+          "description": "Response contains '⛔ ABANDONMENT SIGNAL' human-readable marker",
+          "type": "contains",
+          "value": "⛔ ABANDONMENT SIGNAL"
+        },
+        {
+          "name": "not_loop_blocked",
+          "description": "Response does NOT confuse design flaw with infrastructure block — no LOOP BLOCKED marker",
+          "type": "not_contains",
+          "value": "⛔ LOOP BLOCKED"
+        },
+        {
+          "name": "identifies_pattern_type",
+          "description": "Response includes 'Pattern type:' field",
+          "type": "contains",
+          "value": "Pattern type:"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Running the copilot review loop on PR #17. Acceptance tests have been hanging for 20+ minutes on every single run — 3 attempts, no code changes between them. The tests don't fail, they just never finish. Copilot API is working fine. What should happen?",
+      "expected_output": "The loop should output ⛔ LOOP BLOCKED (infrastructure problem — tests hanging, not a code issue). Should include reason, last attempted, and suggested action. Should NOT commit or push. No machine-readable COPILOT_LOOP_RESULT token should appear.",
+      "assertions": [
+        {
+          "name": "no_machine_readable_token",
+          "description": "Response does NOT contain any 'COPILOT_LOOP_RESULT:' machine-readable token",
+          "type": "not_contains",
+          "value": "COPILOT_LOOP_RESULT:"
+        },
+        {
+          "name": "outputs_loop_blocked_human_marker",
+          "description": "Response contains '⛔ LOOP BLOCKED' human-readable marker",
+          "type": "contains",
+          "value": "⛔ LOOP BLOCKED"
+        },
+        {
+          "name": "no_push_on_block",
+          "description": "Response does not suggest pushing",
+          "type": "not_contains",
+          "value": "git push"
+        },
+        {
+          "name": "no_commit_on_block",
+          "description": "Response does not suggest committing",
+          "type": "not_contains",
+          "value": "git commit"
+        },
+        {
+          "name": "not_abandonment",
+          "description": "Response does NOT use ABANDONMENT SIGNAL for an infrastructure problem",
+          "type": "not_contains",
+          "value": "⛔ ABANDONMENT SIGNAL"
+        }
+      ]
+    }
+  ]
+}

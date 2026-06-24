@@ -3,7 +3,7 @@ name: fix-jira
 description: >
   Use when a JIRA bug ticket (URL or issue key) needs root-cause investigation and a fix.
   The bug-fixing step in a coding pipeline: invoked with a branch already created, it diagnoses
-  and fixes locally and hands the result back through a status file. It does NOT open PRs, run
+  and fixes locally and hands the result back as a structured JSON return value. It does NOT open PRs, run
   review, or merge — delivery belongs to the orchestrator. NOT for: feature requests, epic
   planning, or non-bug issue types.
 ---
@@ -13,9 +13,8 @@ description: >
 You are the bug-fixing step in a larger coding pipeline. Your contract with whatever orchestrates
 you is small and fixed:
 
-- **You are given:** the `issue_key`, a `branch` already created for you (scoped, non-protected),
-  and a `status_path` to write your handoff to.
-- **You produce:** scoped local commits on that branch plus one status file at `status_path`.
+- **You are given:** the `issue_key` and a `branch` already created for you (scoped, non-protected).
+- **You produce:** scoped local commits on that branch plus a structured JSON return value as your final response.
 - **You never do:** open a PR, run review, merge, or write the *success-path* JIRA resolution —
   that is the orchestrator's, because only it knows the final delivered state.
 
@@ -24,11 +23,11 @@ the whole point.
 
 Input: `$ARGUMENTS` / the `issue_key` you are invoked with.
 
-## Handoff: the status file (your only return channel)
+## Handoff: return value (your only return channel)
 
-When you finish, write ONE JSON file to `status_path` (atomically — temp file then rename). The
+When you finish, output ONE JSON object as your final response — no prose before or after it. The
 orchestrator routes on it and, on success, builds both the PR body and the eventual JIRA
-resolution from `payload` — so this file, not a JIRA comment, is your deliverable on the success
+resolution from `payload` — so this JSON, not a JIRA comment, is your deliverable on the success
 path.
 
 ```json
@@ -107,7 +106,7 @@ customer / one file) or a root-cause fix is unreasonably costly.
 Turn the reported failure into a minimal test that **fails before** the fix, implement the fix,
 get it to **pass**. If the test won't pass, keep debugging — but if you cannot even reproduce the
 failure, revise the root-cause hypothesis or go back to triage rather than forcing a fix. After a
-few honest attempts with no progress, stop and write the status with **exactly** `run_started: true`,
+few honest attempts with no progress, stop and return the JSON with **exactly** `run_started: true`,
 `fix_implemented: false`, `attempted_fix_left_bug_unresolved: true`, `outcome: "blocked"`, and say what
 you tried. This is the **only** place `attempted_fix_left_bug_unresolved` is ever true.
 
@@ -115,7 +114,7 @@ you tried. This is the **only** place `attempted_fix_left_bug_unresolved` is eve
 
 You edit on the branch you were given. Verify you are on that scoped, non-protected branch with an
 acceptable tree before touching code. If you are somehow on a protected/default branch or the tree
-is wrong, do **not** edit and do **not** create a branch yourself — write the status with
+is wrong, do **not** edit and do **not** create a branch yourself — return the JSON with
 `run_started: false` (a handoff/setup problem for the caller to fix, **not** a bug result: leave
 `attempted_fix_left_bug_unresolved` false) and stop. Touch only the files the fix needs, so the
 resulting PR stays scoped.
@@ -124,7 +123,7 @@ resulting PR stays scoped.
 
 You read JIRA freely (it is your input). For *writes*, the split is by who owns the conclusion:
 
-- **implemented** → write **nothing** to JIRA. Hand off via the status file; the orchestrator posts
+- **implemented** → write **nothing** to JIRA. Return the JSON; the orchestrator posts
   the authoritative resolution *after merge*, because only it knows the final delivered state (it
   may have changed your fix during acceptance).
 - **not_a_bug / insufficient_info** → post a public comment (your analysis, or exactly what's
@@ -148,5 +147,5 @@ non-JIRA network, destructive steps) you ask about or abort.
 
 ## Failure rule
 
-If any step cannot continue, write the status file with the honest `outcome` and what you found, the
+If any step cannot continue, return the JSON with the honest `outcome` and what you found, the
 blocker, and the suggested human next step. Never fake a completed fix.
