@@ -39,6 +39,7 @@ to re-copy after every update.
 ## Skills
 
 <!-- skills-list-start -->
+- **[install-pi-on-remote](./skills/install-pi-on-remote/)** — Deploy a remote macOS Mac as an agents server: configure dedicated passwordless SSH over LAN or Tailscale, run the repository bootstrap.sh to install Pi, install Herdr with its…
 - **[skill-gate](./skills/skill-gate/)** — Extend skill-creator with Context Concise Principles and change-based verification.
 <!-- skills-list-end -->
 
