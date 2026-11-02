@@ -1,0 +1,1 @@
+Plan an export button for our inventory app. Export should be CSV and respect whichever filters the user has selected. I'm not sure whether v1 should include every stored field or just the fields currently visible in the table. Please help me plan the work, asking for any product decision you think is necessary.

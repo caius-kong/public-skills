@@ -1,0 +1,24 @@
+{
+  "nodes": {
+    "PLAN": {
+      "model": "trendmicro/gpt-6.1-sol",
+      "thinking": "medium"
+    },
+    "EVIDENCE": {
+      "model": "trendmicro/deepseek-v4.1-flash",
+      "thinking": "high"
+    },
+    "TEST_AUTHOR": {
+      "model": "trendmicro/deepseek-v4.1-flash",
+      "thinking": "high"
+    },
+    "EXECUTE": {
+      "model": "trendmicro/deepseek-v4.1-flash",
+      "thinking": "high"
+    },
+    "CONFORMANCE": {
+      "model": "trendmicro/glm-5.3-flash",
+      "thinking": "max"
+    }
+  }
+}

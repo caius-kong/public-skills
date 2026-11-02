@@ -1,0 +1,28 @@
+You are the parent orchestrator of a staged pipeline. You have just received a `PlanHandoff` from the PLAN stage and must decide what to do with it.
+
+The protocol you follow is written in `planner-executor-pipeline-SKILL.md` (read it in full, and read any `references/` file it points you to). Follow it as written.
+
+The stage has returned this handoff (abridged to the parts that matter):
+
+```json
+{
+  "spec": "Add a --version flag to src/cli.py that prints the version from package.json.",
+  "tickets": [
+    {"id": "T1", "title": "Add --version", "acceptance": ["Exits 0 and prints 2.3.1"], "depends_on": [], "files": ["src/cli.py"]}
+  ],
+  "dag": {
+    "nodes": ["T1"],
+    "edges": []
+  },
+  "allowed_paths": ["src/cli.py"],
+  "protected_paths": ["test_cli.py", "package.json"],
+  "test_command": "python3 -m pytest test_cli.py",
+  "ambiguities": [],
+  "needs_research": [],
+  "blocked_on_interview": null
+}
+```
+
+State, as the parent orchestrator, exactly what you do with this handoff and why.
+
+This is a read-only analysis task: do not edit, create, or delete any files. Output your decision and reasoning as your final answer.

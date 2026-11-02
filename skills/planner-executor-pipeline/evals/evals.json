@@ -1,0 +1,54 @@
+{
+  "skill_name": "planner-executor-pipeline",
+  "notes": "Skill-creator-format evals for the pipeline protocol. The skill under test IS the SKILL.md text: the WITH arm loads the live skills/pi/planner-executor-pipeline/SKILL.md (+ references/), the WITHOUT arm loads a frozen pre-skill prompt-template snapshot (skill-creator's 'improving an existing skill' baseline). Each eval probes ONE load-bearing protocol rule by asking the model to act as the parent orchestrator on a fixture and observing whether the rule changes the outcome. Read-only analysis tasks deliberately: no subagents are dispatched, so a single `pi -p` arm is a faithful and cheap probe of whether the protocol text steers behaviour. Runner: evals/run-evals.sh. Grader: evals/grade.py (programmatic evidence; a grader still reads both transcripts per agents/grader.md).",
+  "evals": [
+    {
+      "id": 0,
+      "name": "handoff-contract-shape",
+      "fixture": "handoff-contract-shape",
+      "prompt_file": "handoff-contract-shape/prompt.txt",
+      "assertions": [
+        "Rejects or flags the node/edge-array `dag` as violating the required mapping shape {\"<ticket_id>\": [deps]}, rather than accepting it",
+        "States that a shape mismatch is returned to the stage as-is (原样退回), not normalised by the parent",
+        "Does NOT invent a missing handoff field or fill it in on the subagent's behalf",
+        "Requires the handoff to be persisted verbatim (原样落盘) rather than rewritten by the parent"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "gate-authz-before-violation",
+      "fixture": "gate-authz-before-violation",
+      "prompt_file": "gate-authz-before-violation/prompt.txt",
+      "assertions": [
+        "Checks `state.authorized_test_edits` BEFORE judging the test diff as a violation",
+        "Reaches PASS (authorised-and-recorded) rather than FIX_EXECUTE for the recorded test edit",
+        "Records the authorised test modification in gate-evidence",
+        "Does not treat an allocated/recorded test change as an unauthorised freeze break"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "bounded-wait-terminal",
+      "fixture": "bounded-wait-terminal",
+      "prompt_file": "bounded-wait-terminal/prompt.txt",
+      "assertions": [
+        "Treats an actually expired 24-hour native request as a terminal outcome, not a retry signal",
+        "Does not resend the expired request or poll for a reply",
+        "Does not emit progress or heartbeat messages while waiting",
+        "If the run returns normally after channel expiry, records unresolved questions in blocked_on_interview; does not claim hard stop guarantees a handoff"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "frozen-test-fix-route",
+      "fixture": "frozen-test-fix-route",
+      "prompt_file": "frozen-test-fix-route/prompt.txt",
+      "assertions": [
+        "Does NOT route an unauthorised test change to FIX_EXECUTE when the fix itself requires editing the test",
+        "Routes instead to REPLAN (contract defect) or HALTED (needs human ruling)",
+        "Explains that EXECUTE is forbidden from editing tests, hence FIX_EXECUTE has no legal action",
+        "Does not dispatch a repeated empty FIX_EXECUTE task"
+      ]
+    }
+  ]
+}

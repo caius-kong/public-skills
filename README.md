@@ -40,6 +40,7 @@ to re-copy after every update.
 
 <!-- skills-list-start -->
 - **[install-pi-on-remote](./skills/install-pi-on-remote/)** — Deploy a remote macOS Mac as an agents server: configure dedicated passwordless SSH over LAN or Tailscale, run the repository bootstrap.sh to install Pi, install Herdr with its…
+- **[planner-executor-pipeline](./skills/planner-executor-pipeline/)** — Plan→Test Author→Execute→Gate→Conformance staged pipeline for turning a goal into shipped, verified code.
 - **[skill-gate](./skills/skill-gate/)** — Extend skill-creator with Context Concise Principles and change-based verification.
 <!-- skills-list-end -->
 

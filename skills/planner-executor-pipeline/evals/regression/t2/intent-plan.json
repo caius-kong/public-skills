@@ -1,0 +1,140 @@
+{
+ "spec": {
+  "title": "交付 stdin 流式 count 子命令",
+  "problem_statement": "流水线上要统计 stdin 里有多少个合法数字的人，现在没有命令可用——mean/max/sum 都只给值，行数只能自己数。当前 e2e-cli 只有 mean、max、sum 三个子命令。",
+  "solution": "新增 e2e count，从 stdin 逐行读取至 EOF，忽略空白行，校验每个非空行是有限数字，每个合法数字行计 1。全部成功后打印一行完整十进制整数；遇到首个非法数字立即失败，仅向 stderr 输出带物理行号的错误并退出 2。",
+  "user_stories": [
+   "1. 作为管道使用者，我希望从 stdin 逐行读取数字并统计个数，以便直接处理管道数据。",
+   "2. 作为使用者，我希望有限正负整数、小数和科学计数法都可输入，以便处理常见数字数据。",
+   "3. 作为使用者，我希望非空行整体遵循 Python float(text) 语法，以便解析规则明确且与 sum 一致。",
+   "4. 作为使用者，我希望忽略首尾空白及空白行，以便处理带空行的数据。",
+   "5. 作为使用者，我希望空输入和纯空白输入输出 0，以便空数据流具有明确结果。",
+   "6. 作为使用者，我希望重复数字、零和负数各自计入个数，以便统计记录数而非不同数值数。",
+   "7. 作为使用者，我希望没有末尾换行的最后一行仍被计数，以便处理常见文本输入。",
+   "8. 作为使用者，我希望非法数字、NaN、Infinity 和超出 float 范围的输入被拒绝，以便避免无效数据混入统计。",
+   "9. 作为使用者，我希望错误指出包含空白行在内的物理行号，以便定位输入问题。",
+   "10. 作为脚本使用者，我希望失败时 stdout 为空、stderr 有一条错误且退出 2，以便安全组合命令。",
+   "11. 作为使用者，我希望结果是未经有效位数截断的十进制整数，以便准确获取个数。",
+   "12. 作为使用者，我希望多个有限大数仍能计数成功，以便计数不受求和溢出影响。",
+   "13. 作为大输入流的使用者，我希望逐行处理且不保留全部输入，以便避免按记录数缓存数据。",
+   "14. 作为使用者，我希望通过 --help 发现 count 及其 stdin 输入方式，以便使用命令。",
+   "15. 作为现有用户，我希望 mean、max 和 sum 保持原行为，以便既有脚本继续工作。"
+  ],
+  "implementation_decisions": [
+   "在现有 CLI 注册 count；只接受 stdin，不新增位置数字、文件路径、精度选项或其他自定义参数。保留 argparse 标准帮助及参数错误协议。",
+   "新增独立 stdin_count concern，提供 count_lines(lines: Iterable[str]) -> int，CLI 传入 sys.stdin；不改造 sum 或抽取共享解析器。",
+   "物理行号从 1 开始，每读取一行增加一次，包括被忽略的空白行。",
+   "逐行 strip，空字符串跳过，其余文本整体交给 Python float(text)，不拆分同一行的多个数字。解析失败或结果非有限即为非法数字。",
+   "每个合法非空行计 1；重复值、正负零、负数均正常计入。计数器初值为 Python 整数 0，每次增加整数 1，不使用 float 计数。",
+   "不累计输入数值，不存在 sum out of range 错误；多个有限大数必须正常计数。",
+   "只保存当前行、解析值、物理行号和整数计数器，不保留全部输入。整数计数和行号的位数可以随输入规模增长，不承诺严格固定字节内存。",
+   "仅全部读取成功后输出完整十进制整数及一个换行，不采用 :g、不截断为 6 位有效数字、不使用科学计数法。成功退出 0，stderr 为空。",
+   "首个非法数字抛出 ValueError，消息严格为 invalid number on line N；沿用 CLI 现有错误边界，stderr 严格输出 error: invalid number on line N 及换行，stdout 为空，退出 2，无 traceback。",
+   "仅更新命令自带帮助，不增加第三方依赖；mean、max、sum 的计算、输出及错误行为保持不变。"
+  ],
+  "testing_decisions": [
+   "唯一新增测试边界为真实子进程 python -m e2e_cli.cli；提供 stdin，断言退出码、完整 stdout 和完整 stderr。",
+   "沿用现有 CLI 测试使用 subprocess、sys.executable 和 PYTHONPATH=src 的惯例，并设置合理 timeout。",
+   "仅新增 count 的 CLI 测试资产，不直接导入内部函数、不 mock 被测实现、不修改既有测试。",
+   "覆盖有限数字语法、空白、空输入、重复值和零、无末尾换行、完整整数输出、非有限输入、首错与物理行号、帮助、参数拒绝及旧命令回归。",
+   "TEST_AUTHOR 先提交新测试，确认既有测试通过、新功能测试因尚无 count 而失败，随后测试对 EXECUTE 冻结。",
+   "流式消费、不保留全部输入及整数计数策略通过代码审查确认；子进程测试不被当作严格内存复杂度证明。"
+  ],
+  "out_of_scope": [
+   "对输入求和、补偿求和、Decimal、任意精度输入数字语义或计数浮点格式。",
+   "位置数字、文件路径、精度选项及其他自定义参数。",
+   "同一非空行中提供多个数字、按值去重计数或统计空白行。",
+   "自定义输入编码、底层 I/O 故障恢复、性能基准或严格固定字节内存保证。",
+   "修改现有 sum 实现、共享解析器重构、修改既有测试、README 或项目配置。",
+   "实现 agent 新增文档；交付后的规格归档由父会话按流水线处理。"
+  ]
+ },
+ "decisions": [
+  {
+   "id": "REF",
+   "question": "本轮沿用哪些 sum 已定先例？",
+   "ruling": "沿用先例 Q1 的有限 float 输入校验；Q2 的 strip、忽略空行、空输入为 0、非空行整体解析；Q3 的首错停止、物理行号、stdout 为空及严格 invalid number 错误协议；Q4 的仅 stdin、标准帮助、不增加参数和实现文档、旧命令不变；Q5 的 float(text) 输入语法、成功仅一行且 stderr 为空；Q6 的逐行处理、不保留全部输入、无自定义编码/I/O 恢复/性能基准；Q7 的唯一真实 CLI 子进程 seam、只新增专属测试、旧测试不改、流式由审查确认；Q8 的单张纵向票、无依赖、独立 concern 和 TEST_AUTHOR 先写冻结测试模式。sum 专属命令名及文件名映射为 count。本轮 Q1 明确替换 Q5 的 :g 输出规则及 Q1/Q6 的浮点累计和累计溢出规则。"
+  },
+  {
+   "id": "Q1",
+   "question": "是否确认每个合法非空数字行计 1，沿用有限 float(text) 校验及先例输入/错误/帮助/测试协议；计数采用 Python 整数，完整十进制输出而非 :g，无求和溢出，并确认上述完整范围？",
+   "ruling": "用户原话：yes。采纳完整推荐：每个合法非空数字行计 1，重复值、0、负数均计入；初值为 0 的 Python 整数计数器，完整十进制整数输出；不求和，因此没有 sum out of range。明确替换先例的 :g 结果格式与浮点累计/溢出规则，其余适用条款不变。正常读取只保存当前行、解析值、行号和整数计数器，不声称严格固定字节内存。确认所述完整行为范围。"
+  },
+  {
+   "id": "Q2",
+   "question": "是否认可消息中的单票 T1、无依赖、实现与测试路径、沿用唯一真实 CLI 子进程 seam；无需拆分或合并？",
+   "ruling": "用户原话：yes。采纳推荐：保留完整纵向单票 T1，DAG 无依赖；修改 src/e2e_cli/cli.py，新增 src/e2e_cli/stdin_count.py，提供 count_lines(lines: Iterable[str]) -> int；仅新增 tests/test_count_cli.py，沿用唯一真实 CLI 子进程 seam，由 TEST_AUTHOR 先写并冻结测试；既有测试和 stdin_sum 保持不变，无需预重构、拆分或合并。"
+  }
+ ],
+ "seams": [
+  {
+   "id": "cli-process",
+   "modules": [
+    "e2e_cli.cli"
+   ],
+   "rationale": "真实子进程执行 python -m e2e_cli.cli 是现有最高外部边界，能同时验证命令注册、stdin、参数、输出及退出协议，无需新增内部测试边界。",
+   "catches": "count 未注册、数字校验错误、空白处理错误、计数错误、浮点计数或 :g 格式导致的结果错误、错误行号或首错错误、部分结果泄漏、stderr/退出码错误、帮助和参数协议错误，以及 mean/max/sum 可观察回归。",
+   "misses": "无法仅靠子进程断言证明逐行读取、不保留全部输入或整数计数内部策略；这些由代码审查确认。不覆盖底层 I/O 故障恢复和性能基准。"
+  }
+ ],
+ "tickets": [
+  {
+   "id": "T1",
+   "title": "交付 stdin 流式 count 子命令",
+   "acceptance": [
+    "AC1：执行 count，stdin 为 \"1\\n-2\\n3.5\\n1e1\\n\"，退出 0，stdout 严格为 \"4\\n\"，stderr 为空。",
+    "AC2：stdin 为 \"\\n  1.5 \\n\\t\\n-0.5\\n\" 时输出 \"2\\n\"；空 stdin 和纯空白 stdin 分别输出 \"0\\n\"；均退出 0 且 stderr 为空。",
+    "AC3：输入 \"1\\n2\" 时输出 \"2\\n\"，最后一行没有换行也计入；输入 \"1_000\\n+2.5e1\\n\" 时遵循 float(text) 语法输出 \"2\\n\"；均退出 0 且 stderr 为空。",
+    "AC4：输入 \"0\\n-0\\n0\\n-2\\n-2\\n\" 输出 \"5\\n\"，重复值和正负零均各计一次；提供 1,000,001 个 \"1\\n\" 时 stdout 严格为 \"1000001\\n\"，不使用 :g、有效位数截断或科学计数法；均退出 0 且 stderr 为空。",
+    "AC5：输入 \"1e308\\n1e308\\n-1e308\\n\" 时退出 0、stdout 严格为 \"3\\n\"、stderr 为空；有限大数仅参与校验和计数，不触发求和溢出。",
+    "AC6：输入 \"2\\n\\nnope\\n\" 时退出 2、stdout 为空、stderr 严格为 \"error: invalid number on line 3\\n\"；输入 \"1 2\\n\" 时同样失败，行号为 1，不拆分同一行中的多个数字。",
+    "AC7：分别以 NaN、inf、-Infinity 和 1e309 为第 2 个物理行，前面为合法数字行；每次退出 2、stdout 为空、stderr 严格为 \"error: invalid number on line 2\\n\"。",
+    "AC8：输入 \"1\\n\\nbad\\nNaN\\n\" 时只报告第 3 行：退出 2、stdout 为空、stderr 严格为 \"error: invalid number on line 3\\n\"；不输出部分计数、不被后续错误覆盖。",
+    "AC9：顶层 --help 退出 0、stderr 为空且列出 count；count --help 退出 0、stderr 为空且说明从 stdin 逐行读取数字并统计个数。count 1、count --precision 2、count --unknown 均被 argparse 拒绝，退出 2、stdout 为空、stderr 包含标准 error: 参数错误，不能只是 count 未注册错误。",
+    "AC10：真实 CLI 回归：mean 1 2 6 输出 \"3.00\\n\"，mean 1 2 --precision 3 输出 \"1.500\\n\"，max 1 -5 2.5 输出 \"2.5\\n\"；sum 接收 \"1\\n-2\\n3.5\\n1e1\\n\" 输出 \"12.5\\n\"；这些成功案例均退出 0 且 stderr 为空。mean 无数字仍退出 2 且 stdout 为空。sum 接收 \"1e308\\n1e308\\n\" 仍退出 2、stdout 为空、stderr 严格为 \"error: sum out of range on line 2\\n\"。",
+    "AC11：与 AC1、AC4、AC5、AC8 的外部断言配套，代码审查确认独立 stdin_count concern 的 count_lines(lines: Iterable[str]) -> int 直接逐行消费输入，整数计数初值 0，合法行增加 1；不得全量 read()/readlines()、全量列表化或保留全部输入，不累计输入数值；沿用现有 ValueError 错误边界且成功前不打印。整数状态位数增长不算违反流式要求。",
+    "AC12：新增测试仅位于 tests/test_count_cli.py，通过真实 python -m e2e_cli.cli 子进程及 stdin 验证所有外部行为，设置合理 timeout，不直接导入内部实现、不 mock 被测对象；既有测试不改。TEST_AUTHOR 先确认新测试因 count 缺失而红、既有测试绿，提交后冻结。实现后全量执行 PYTHONPATH=src python3 -m pytest -q tests 通过。"
+   ],
+   "depends_on": [],
+   "files": [
+    "src/e2e_cli/cli.py",
+    "src/e2e_cli/stdin_count.py",
+    "tests/test_count_cli.py"
+   ],
+   "seam": "cli-process"
+  }
+ ],
+ "dag": {
+  "T1": []
+ },
+ "allowed_paths": [
+  "src/e2e_cli/cli.py",
+  "src/e2e_cli/stdin_count.py",
+  "tests/test_count_cli.py"
+ ],
+ "protected_paths": [
+  "src/e2e_cli/__init__.py",
+  "src/e2e_cli/calc.py",
+  "src/e2e_cli/stdin_sum.py",
+  "tests/test_calc.py",
+  "tests/test_cli.py",
+  "tests/test_sum_cli.py",
+  "pyproject.toml",
+  "README.md",
+  ".gitignore",
+  "docs/specs/2026-10-23-sum-subcommand.md",
+  "handoffs/plan-handoff.json"
+ ],
+ "test_command": "PYTHONPATH=src python3 -m pytest -q tests",
+ "ambiguities": [],
+ "needs_research": [],
+ "deviations": [
+  "to-spec 的发布目标由 issue tracker 改为 PlanHandoff.spec；不创建 tracker issue、不应用 tracker 标签、不要求 tracker setup，由父会话原样持久化。采用任务要求的六节，省略无独立内容的可选 Further Notes。",
+  "to-tickets 的发布目标由 tracker 或逐票本地文件改为 PlanHandoff.tickets 与 dag；保留纵向切片、阻塞边和用户审批，不创建 issue 或本地票据文件。具体实施路径单列在契约路径字段，不写入六节规格或票据行为描述。"
+ ],
+ "new_symbols": [
+  "count",
+  "count_lines",
+  "stdin_count"
+ ]
+}

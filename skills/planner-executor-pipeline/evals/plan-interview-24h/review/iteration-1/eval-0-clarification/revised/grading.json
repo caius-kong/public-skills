@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "The same PLAN continues through the non-ruling reply",
+      "passed": true,
+      "evidence": "Baseline contract instructs immediate blocked exit; revised arm continued several turns and ended only when fixture ended."
+    },
+    {
+      "text": "No user preference is promoted to a product ruling",
+      "passed": true,
+      "evidence": "Both outputs preserve live-vs-scheduled as unresolved; revised output explicitly reports no completed PlanHandoff."
+    },
+    {
+      "text": "Settled user information is retained",
+      "passed": true,
+      "evidence": "Both outputs retain information given in user replies."
+    },
+    {
+      "text": "No fake implementation plan is claimed on unresolved scope",
+      "passed": true,
+      "evidence": "Baseline returns blocked payload; revised returns fixture_ended_without_product_ruling."
+    }
+  ]
+}

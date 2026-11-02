@@ -1,0 +1,1 @@
+Help me plan an internal customer-support dashboard to replace a shared spreadsheet. It needs ticket status and a daily summary. We have not settled whether the first release needs live updates or whether scheduled imports are acceptable. Work through the plan with me as needed and produce the normal planning handoff once the scope is ready.

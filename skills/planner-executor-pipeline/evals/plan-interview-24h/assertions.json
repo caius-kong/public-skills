@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "defined_before_eval": true,
+  "status": "completed_parent_fresh_paired_eval",
+  "scope": "PLAN interview continuity and direct-async 24-hour native request timeout; no new request budget, state schema, journal, resume framework, or real-day soak.",
+  "arms": {
+    "baseline": "Frozen pre-edit pipeline and PLAN agent launched from /tmp/plan-interview-final-eval/old.",
+    "revised": "Updated pipeline and PLAN agent launched from /tmp/plan-interview-final-eval/new.",
+    "execution": "Matched native fresh PLAN runs used the same model, task and staged responses; full transcripts were read and retained in review/iteration-1."
+  },
+  "assertions": [
+    {
+      "id": "same-plan-continues-after-nonfinal-replies",
+      "prompt": "normal-clarification.txt",
+      "checks": [
+        "An explanation request, partial response, and discussion do not terminate the active PLAN interview.",
+        "Settled choices remain effective; PLAN asks only unresolved/new necessary questions and does not repeat resolved questions.",
+        "Parent relays original reply text; PLAN determines semantic sufficiency without parent arbitration.",
+        "PLAN does not infer or default an unresolved user choice from a recommendation or partial reply.",
+        "PLAN waits quietly and returns the normal handoff only after user decisions are sufficient."
+      ]
+    },
+    {
+      "id": "new-ambiguity-is-clarified-without-defaulting",
+      "prompt": "new-ambiguity.txt",
+      "checks": [
+        "PLAN recognizes visible-columns versus all-columns export as a potentially material product choice.",
+        "Partial clarification stays in the same interview and gets focused follow-up rather than an assumed scope.",
+        "The final handoff reflects the user's selected scope and retains the normal PLAN schema and gates."
+      ]
+    }
+  ],
+  "parent_review": "Completed. Baseline ended after the first non-ruling reply; revised PLAN continued in the same run through explanation and follow-up discussion, then stopped the evaluation without inventing a product decision or claiming a complete PlanHandoff. See review/iteration-1/review-notes.md. No 24-hour soak is claimed."
+}

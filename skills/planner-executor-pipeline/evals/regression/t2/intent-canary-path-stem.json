@@ -1,0 +1,23 @@
+{
+ "status": "accepted",
+ "problem": "README 清单的使用者目前只能逐条获取条目，无法直接取得完成数、总数和完成百分比这三项摘要。",
+ "outcome": "调用方能从一份 Markdown 清单文本直接获得进度摘要，并在 README 中看到可复制且输出经过验证的示例。",
+ "constraints": [
+  {
+   "text": "统计口径与既有逐条解析一致。",
+   "enforced_by": [
+    "AC2"
+   ]
+  },
+  {
+   "text": "既有公开接口的行为保持不变。",
+   "enforced_by": [
+    "AC5"
+   ]
+  }
+ ],
+ "not_doing": [
+  "文件读取或改写、自动更新 README、CLI、徽章或 CI 自动更新"
+ ],
+ "_plan": "intent-plan-notes.json"
+}

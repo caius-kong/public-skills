@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "defined_before_eval": true,
+  "status": "completed_parent_fresh_paired_eval",
+  "scope": "PLAN interview continuity, native 24-hour per-request channel window, and separate 24-hour total PLAN run deadline.",
+  "arms": {
+    "baseline": "Frozen pre-edit pipeline and PLAN agent at /tmp/plan-interview-final-eval/old.",
+    "revised": "Updated pipeline and PLAN agent at /tmp/plan-interview-final-eval/new.",
+    "execution": "Matched fresh native PLAN contexts used the same model and staged responses; full outputs were read and retained in ../plan-interview-24h/review/iteration-1."
+  },
+  "assertions": [
+    {
+      "id": "normal-clarification-stays-in-run",
+      "prompt": "../plan-interview-24h/normal-clarification.txt",
+      "checks": [
+        "An explanation request and partial answer do not end the current PLAN.",
+        "The parent relays original replies and PLAN alone judges whether a decision is settled.",
+        "PLAN carries settled choices forward, asks only what remains unresolved, and never invents/defaults an answer.",
+        "Waiting is quiet and the normal PlanHandoff remains the deliverable after sufficient user rulings."
+      ]
+    },
+    {
+      "id": "new-ambiguity-is-clarified",
+      "prompt": "../plan-interview-24h/new-ambiguity.txt",
+      "checks": [
+        "PLAN asks a focused clarification for the materially ambiguous export scope.",
+        "Partial clarification stays in the same interview rather than causing a new run.",
+        "The final handoff reflects the user's selected scope and retains the normal PlanHandoff schema."
+      ]
+    },
+    {
+      "id": "separate-native-request-timeout",
+      "checks": [
+        "The direct async PLAN request's expiresAt - createdAt equals 86400000 ms.",
+        "The child extension applies the environment override before native request creation, while the parent and non-PLAN definitions do not load it.",
+        "The run deadline is total elapsed lifetime from launch; a new interview request gets its own separate channel deadline.",
+        "No real-day soak or guaranteed hard-kill handoff is claimed."
+      ]
+    }
+  ],
+  "parent_review": "Complete: the revised arm continued the same PLAN after explanation and preference/recommendation discussion; baseline ended on the first non-ruling reply. The fixture ended without product approval. Channel expiry is tested separately; no real-day soak claimed."
+}

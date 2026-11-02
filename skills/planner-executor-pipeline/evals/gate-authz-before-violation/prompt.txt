@@ -1,0 +1,34 @@
+You are the parent orchestrator, now at the GATE node (this stage has no subagent — you run the deterministic checks yourself).
+
+The protocol you follow is written in `planner-executor-pipeline-SKILL.md` (read it in full, and read any `references/` file it points you to). Follow it as written.
+
+Context for the gate run. The run's state file reads:
+
+```json
+{
+  "stage": "GATE",
+  "replan_round": 0,
+  "research_round": 0,
+  "interview_round": 0,
+  "plan_revision_round": 0,
+  "cursor": ["T1"],
+  "tickets": ["T1"],
+  "attempts": {"T1": 1},
+  "dispatch_failures": {},
+  "interview_log": [],
+  "base_sha": "9f0c1a2",
+  "brief_path": "handoffs/brief.md",
+  "authorized_test_edits": [
+    {"file": "test_cli.py", "commit": "a1b2c3d", "reason": "acceptance T1 changed the CLI contract; the existing assertion asserted the old no-flag behaviour", "authorized_at": "2026-09-20T10:00:00Z"}
+  ],
+  "orchestrator_commits": []
+}
+```
+
+The Test Author froze `test_cli.py` in commit `a1b2c3d`. `git diff a1b2c3d..HEAD -- test_cli.py` is NOT empty, and touches nothing else.
+
+Your task: run gate check #3 (the test-freeze check), give the verdict, and state what you record in `gate-evidence.json`.
+
+State the final verdict (`PASS` / `FIX_EXECUTE` / `REPLAN`) and explain how you reached it.
+
+This is a read-only analysis task: do not edit, create, or delete any files. Output your verdict and reasoning as your final answer.

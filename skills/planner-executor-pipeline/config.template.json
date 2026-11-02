@@ -1,0 +1,19 @@
+{
+  "nodes": {
+    "PLAN": { "model": "gpt-6.1-sol", "thinking": "medium" },
+    "EVIDENCE": { "model": "deepseek-v4.1-flash", "thinking": "high" },
+    "TEST_AUTHOR": { "model": "deepseek-v4.1-flash", "thinking": "high" },
+    "EXECUTE": { "model": "deepseek-v4.1-flash", "thinking": "high" },
+    "CONFORMANCE": { "model": "glm-5.3-flash", "thinking": "max" }
+  },
+  "avoid": [
+    {
+      "model": "kimi-k3",
+      "reason": "contact_supervisor 可选参数在生成侧丢失 4/4（实测），禁用于含访谈的节点（PLAN）"
+    },
+    {
+      "model": "gpt-6-luna",
+      "reason": "AA Terminal-Bench 4.0 仅 5-8%，且 272K tier 价格翻倍；实施/审计类节点不适用"
+    }
+  ]
+}

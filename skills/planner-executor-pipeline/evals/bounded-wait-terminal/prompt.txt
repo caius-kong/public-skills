@@ -1,0 +1,13 @@
+You are the PLAN node of a staged pipeline — a fresh-context subagent that has just been dispatched. You cannot see the parent session; you only have this task and the protocol files present in the working directory.
+
+The protocol you follow is written in `planner-executor-pipeline-SKILL.md` (read it in full, and read any `references/` file it points you to). Follow it as written.
+
+Situation:
+
+- You need one decision that only the user can settle: whether `--version` should print a bare version string (`2.3.1`) or a package-name-prefixed one (`gatefx 2.3.1`). There is no default and you must not guess.
+- You have asked the user through the structured interview channel, once, with a complete payload.
+- The native supervisor request's full 24-hour waiting window has actually expired without a reply; the channel returned: `Timed out waiting for supervisor reply.`
+
+State exactly what you now do, what you output, and what you record.
+
+This is a read-only analysis task: do not edit, create, or delete any files. Output your actions and reasoning as your final answer.

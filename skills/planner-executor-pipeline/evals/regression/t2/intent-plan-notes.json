@@ -1,0 +1,243 @@
+{
+ "spec": {
+  "title": "清单进度摘要与 README 可执行示例",
+  "intent": {
+   "status": "draft",
+   "problem": "README 清单的使用者目前只能逐条获取条目，无法直接取得完成数、总数和完成百分比这三项摘要。",
+   "outcome": "调用方能从一份 Markdown 清单文本直接获得进度摘要，并在 README 中看到可复制且输出经过验证的示例。没有清单项时，完成百分比明确表示为未定义。",
+   "constraints": [
+    {
+     "text": "统计口径与既有逐条解析一致，嵌套和重复条目分别计数。",
+     "enforced_by": [
+      "AC2"
+     ]
+    },
+    {
+     "text": "非空清单返回 0–100 的浮点百分数，按 Python round 语义保留两位小数；空清单返回未定义值。",
+     "enforced_by": [
+      "AC3",
+      "AC4"
+     ]
+    },
+    {
+     "text": "既有公开接口的行为保持不变。",
+     "enforced_by": [
+      "AC5"
+     ]
+    },
+    {
+     "text": "README 的混合清单和空清单示例必须实际执行并通过验证。",
+     "enforced_by": [
+      "AC6"
+     ]
+    },
+    {
+     "text": "不增加依赖、配置或模块，不进行无关重构。",
+     "enforced_by": [
+      "GATE#2",
+      "review-only"
+     ]
+    }
+   ],
+   "not_doing": [
+    "文件读取或改写、自动更新 README、CLI、徽章或 CI 自动更新",
+    "扩展 Markdown 解析语法、去重或新增代码块排除规则",
+    "可配置精度或额外格式化接口",
+    "非字符串输入的转换、验证或错误协议"
+   ]
+  },
+  "problem_statement": "README 清单的使用者目前只能逐条获取条目，无法直接取得完成数、总数和完成百分比这三项摘要。现有库提供条目解析，但调用方必须自行计算摘要；README 也没有可复制的进度用例。",
+  "solution": "新增从字符串同步取得进度摘要的公开能力，返回完成数、总数和完成百分比。统计严格沿用现有解析行为。README 提供混合清单与空清单的可执行交互示例，并解释百分比单位、舍入和空值语义。",
+  "user_stories": [
+   "1. As a 清单使用者, I want 从一份 Markdown 文本直接获得完成数, so that 无需自行逐条计数。",
+   "2. As a 清单使用者, I want 同时获得总数, so that 能了解任务规模。",
+   "3. As a 清单使用者, I want 获得 0–100 的完成百分比, so that 能直接理解整体进度。",
+   "4. As a 清单使用者, I want 非空清单的百分比舍入到两位小数, so that 展示结果简洁一致。",
+   "5. As a 清单使用者, I want 空清单返回未定义的百分比, so that 不把没有任务误认为零进度或全部完成。",
+   "6. As a 清单使用者, I want 大小写完成标记都计为完成, so that 摘要与现有解析结果一致。",
+   "7. As a 清单使用者, I want 嵌套及重复条目各自计数, so that 摘要与逐条结果一一对应。",
+   "8. As a 现有调用方, I want 原有条目解析接口保持不变, so that 升级后原有代码继续工作。",
+   "9. As a 库调用方, I want 只导入公开包即可取得摘要, so that 无需依赖内部模块。",
+   "10. As a README 读者, I want 复制混合清单示例并得到文档中的结果, so that 能快速开始使用。",
+   "11. As a README 读者, I want 看见空清单示例和空值解释, so that 能正确处理无定义完成率。",
+   "12. As a 维护者, I want 文档示例随测试实际执行, so that 接口与文档不会悄然漂移。"
+  ],
+  "implementation_decisions": [
+   "新增公开函数 notes.progress(text)，只承诺 str 输入，同步返回普通 dict，不新增结果类。",
+   "返回字典恰含 completed、total、percent 三个键；前两者为 int，percent 为 float | None。",
+   "total 等于 items(text) 的条目数；completed 等于其中 done 为真的条目数。",
+   "非空时 percent 为 float，数值等于 round(completed / total * 100, 2)，沿用 Python round 语义；不承诺浮点数的文本显示始终带两位小数。",
+   "空字符串或未识别出清单项时返回 {'completed': 0, 'total': 0, 'percent': None}。此用户裁定替换空清单 percent 为 0.0 的原推荐。",
+   "progress 放入现有清单模块，复用 items 的结果计算；通过 notes 包及其 __all__ 导出。保留 Item、items 的现有实现和签名。",
+   "识别语法保持现状：按行处理，允许前导空格，只识别 '- [ ] '、'- [x] '、'- [X] ' 前缀；嵌套父子分别计数，不去重，不新增代码块排除。",
+   "不把字符串解释为文件路径；不新增文件对象输入模式、参数验证、非字符串转换或错误协议。",
+   "README 使用 pycon 交互示例，先 import notes；混合输入固定为 '- [x] write\\n- [ ] review\\n- [X] ship\\n'，展示 {'completed': 2, 'total': 3, 'percent': 66.67}；空字符串展示 {'completed': 0, 'total': 0, 'percent': None}。",
+   "不新增模块、依赖或配置，不进行顺手重构；内部具体遍历方式不构成公共保证。"
+  ],
+  "testing_decisions": [
+   "唯一被测实现边界为公开 notes 包。新测试使用 import notes，不导入子模块，不 mock 被测逻辑。",
+   "沿用既有 pytest 测试风格，在独立进度测试文件中增加黑盒测试，既有解析测试保持原样。",
+   "断言普通字典的精确键集合、数值、字段类型；空清单 percent 使用 is None 断言。",
+   "通过公开 notes.items 和 notes.Item 校验兼容性及与摘要的一致性，覆盖嵌套、重复、大小写标记、非清单行及当前不支持的语法。",
+   "使用标准库读取 README 并执行 doctest；断言实际包含并执行了已批准的两个摘要示例，不能仅检查 doctest 零失败。",
+   "doctest 运行使用独立命名空间，不预注入 notes，确保文档自身的 import notes 示例有效；以文档实际出现的顺序校验输出。",
+   "所有新增测试函数名包含对应 AC 编号，例如 test_ac4_empty_input；每条可测试验收至少有一个实际断言。",
+   "AC7 和 AC8 为 review-only 验收，父会话在 GATE 中显式登记，不要求通过私有导入或源码结构测试伪造黑盒覆盖。",
+   "TEST_AUTHOR 先提交测试并确认因缺失公开能力或示例而失败，随后冻结测试；EXECUTE 不得修改冻结测试。"
+  ],
+  "out_of_scope": [
+   "自动读取、改写或更新 README，以及文件 I/O、CLI、徽章和 CI 更新",
+   "Markdown 语法扩展、代码块过滤、去重、按层级加权或忽略子项",
+   "新结果类、新模块、新依赖、配置项和无关重构",
+   "自定义精度、额外格式化接口、非字符串输入支持或错误协议"
+  ],
+  "further_notes": [
+   "本仓库没有历史 spec、GLOSSARY.md 或 ADR；本次决策来自本次访谈。",
+   "现有测试从 notes 导入公开函数；既有解析器的行为是本次统计口径依据。",
+   "用户已批准需求、唯一测试 seam 和单张纵切票；intent 保持 draft，最终冻结由父会话按流程确认。",
+   "未运行测试：PLAN 只读且不承担测试执行；后续阶段使用约定的全量测试命令。"
+  ]
+ },
+ "new_symbols": [
+  "notes.progress"
+ ],
+ "decisions": [
+  {
+   "id": "D1",
+   "question": "Q1：是否只交付字符串输入的库能力和 README 示例，不做自动更新、文件 I/O、CLI 或徽章？推荐 yes。",
+   "ruling": "采纳推荐；只做库能力和可复制示例。",
+   "user_reply": "Q1 yes / Q2 yes / Q3 yes。按推荐采纳，并把裁定内容写进 spec 与 decisions：范围只做字符串输入的库能力与 README 可复制示例，不做文件 I/O、CLI、自动改写 README 或徽章；统计对象恰好是 items 当前返回的全部条目（含嵌套，父子各计、不去重，x/X 为完成，非清单行不计，不改既有解析行为）；新增 notes.progress(text) 返回普通字典 {completed:int, total:int, percent:float}，不新增结果类、不改旧签名。百分比精度与空清单语义按你说的留到下一轮；先例覆盖不到的地方若仍有关键未决，照常问。"
+  },
+  {
+   "id": "D2",
+   "question": "Q2：是否严格沿用 items 的统计对象，嵌套和重复分别计数，不改变解析语法？推荐 yes。",
+   "ruling": "采纳推荐；统计对象恰好是 items 当前返回的全部条目，x/X 完成，非清单行不计，不新增代码块排除规则。",
+   "user_reply": "Q1 yes / Q2 yes / Q3 yes。按推荐采纳，并把裁定内容写进 spec 与 decisions：范围只做字符串输入的库能力与 README 可复制示例，不做文件 I/O、CLI、自动改写 README 或徽章；统计对象恰好是 items 当前返回的全部条目（含嵌套，父子各计、不去重，x/X 为完成，非清单行不计，不改既有解析行为）；新增 notes.progress(text) 返回普通字典 {completed:int, total:int, percent:float}，不新增结果类、不改旧签名。百分比精度与空清单语义按你说的留到下一轮；先例覆盖不到的地方若仍有关键未决，照常问。"
+  },
+  {
+   "id": "D3",
+   "question": "Q3：是否新增 notes.progress(text)，返回含 completed、total、percent 的普通字典，不新增结果类或修改旧签名？推荐 yes。",
+   "ruling": "采纳接口方向；completed/total 为 int。percent 的初始 float 类型由 D5 明确修订为 float | None。",
+   "user_reply": "Q1 yes / Q2 yes / Q3 yes。按推荐采纳，并把裁定内容写进 spec 与 decisions：范围只做字符串输入的库能力与 README 可复制示例，不做文件 I/O、CLI、自动改写 README 或徽章；统计对象恰好是 items 当前返回的全部条目（含嵌套，父子各计、不去重，x/X 为完成，非清单行不计，不改既有解析行为）；新增 notes.progress(text) 返回普通字典 {completed:int, total:int, percent:float}，不新增结果类、不改旧签名。百分比精度与空清单语义按你说的留到下一轮；先例覆盖不到的地方若仍有关键未决，照常问。"
+  },
+  {
+   "id": "D4",
+   "question": "Q4：是否采用 0–100 float，非空时 round(completed / total * 100, 2)，无精度参数？推荐 yes。",
+   "ruling": "采纳推荐；沿用 Python round 语义。",
+   "user_reply": "Q4 yes：percent 用 0-100 的 float，非空时 round(completed / total * 100, 2)，例如 1/3 返回 33.33、全部完成返回 100.0；沿用 Python round 语义，不提供可配置精度或额外格式化接口。"
+  },
+  {
+   "id": "D5",
+   "question": "Q5：空清单是否返回 completed=0、total=0、percent=0.0？推荐 yes。",
+   "ruling": "不采纳 0.0 推荐。空字符串和没有识别到清单项时，返回 completed=0、total=0、percent=None；percent 类型为 float | None。不抛除零错误，不表示 100%。",
+   "user_reply": "Q5 **不采纳你的 0.0 推荐**：空字符串或没有任何识别到的清单项时，返回 {\"completed\": 0, \"total\": 0, \"percent\": null}（JSON 里的 null / Python 的 None），不抛除零错误，也不表示已完成 100%。理由：0/0 的完成率无定义，与上一个交付对空集合统计量返回 null 的口径一致；percent 的类型因此是 float | None。请把这条明确写进 spec 与 decisions，注明它替换了\"空清单 percent 为 0.0\"的推荐。"
+  },
+  {
+   "id": "D6",
+   "question": "Q6：是否在现有清单模块实现并复用 items，通过 notes 和 __all__ 导出，保留旧实现、不加依赖或新模块？推荐 yes。",
+   "ruling": "采纳推荐；不承诺内部具体遍历方式。",
+   "user_reply": "Q6 yes：progress 放在现有清单模块，复用 items 的结果计算，再从 notes 包与 __all__ 导出，Item 与 items 保持原样；不新增模块、不加依赖或配置、不做顺手重构，不承诺内部遍历方式。"
+  },
+  {
+   "id": "D7",
+   "question": "Q7：是否只承诺 str 输入、同步返回，不新增非字符串转换、校验或错误协议？推荐 yes。",
+   "ruling": "采纳推荐；不提供文件路径或文件对象输入模式。",
+   "user_reply": "Q7 yes：只承诺 str 输入、同步返回；不新增参数校验、非字符串转换或错误协议；不接受文件路径或文件对象作为另一种输入模式。"
+  },
+  {
+   "id": "D8",
+   "question": "Q8：是否新增公开 notes 黑盒测试文件，保留旧测试，通过同一 seam 验证 README，不测私有实现或 mock？推荐 yes。",
+   "ruling": "采纳推荐；允许读取 README 并校验其示例。",
+   "user_reply": "Q8 yes：只通过公开的 notes 包测试新行为，新增独立进度测试文件，保留既有解析测试不动；新增测试用 import notes 断言返回字典、字段值与类型，并通过公开 items 检查兼容性；不导入私有模块、不 mock 被测逻辑。读 README 并用同一公开 API 校验示例输出可以接受——文档措辞变化导致测试失败正是它的目的。"
+  },
+  {
+   "id": "D9",
+   "question": "Q9：是否采用固定混合/空清单 pycon 示例、用 doctest 实际执行，并说明统计口径和 None 空值？推荐 yes。",
+   "ruling": "采纳推荐；两项固定示例必须存在并实际执行，其他文案不要求逐字匹配。",
+   "user_reply": "Q9 yes：README 用 pycon 交互示例，含混合清单与空清单两个调用；混合例文本固定为 \"- [x] write\\n- [ ] review\\n- [X] ship\\n\"，展示 import notes 后 notes.progress(text) 输出 {'completed': 2, 'total': 3, 'percent': 66.67}；空字符串示例展示 {'completed': 0, 'total': 0, 'percent': None}；并说明单位为 0-100 的百分数、舍入到两位小数、空清单为 None、统计口径沿用 items。新增测试用标准库 doctest 执行 README 中的交互示例，必须确实执行这些示例（空文档不得通过）。不强制其他文案的具体措辞。"
+  },
+  {
+   "id": "D10",
+   "question": "Q10：是否确认当前共享理解完整，结束需求访谈？推荐 yes。",
+   "ruling": "需求已确认，不扩大范围。",
+   "user_reply": "Q10 yes：确认这就是本次完整需求——新增公开进度字典 API、完全沿用解析口径、非空两位百分数、空清单 None、旧接口不变、只做库与可复制文档、仅经公开包黑盒验收。需求访谈到此结束。"
+  },
+  {
+   "id": "D11",
+   "question": "Q11：是否批准唯一公开 notes seam，含 README doctest，内部复用落点由代码审查核实？推荐 yes。",
+   "ruling": "批准唯一 seam S1；review-only 验收由父会话在 GATE 显式登记。",
+   "user_reply": "Q11 yes：批准唯一测试 seam S1（modules=[\"notes\"]）——新测试只 import notes，直接校验公开返回结果与旧解析兼容性，并用标准库读取 README 执行其 doctest；不断言私有函数结构，复用 items 的落点由代码审查核实（GATE 侧按 review-only 显式登记）。"
+  },
+  {
+   "id": "D12",
+   "question": "Q12：是否批准单张 T1 完整纵切票、无阻塞边及四个具体允许文件路径，不再拆合？推荐 yes。",
+   "ruling": "批准单票、无依赖和四个允许文件；既有测试及配置不改；测试由 TA 先提交并冻结。",
+   "user_reply": "Q12 yes：批准单张完整纵切票 T1「通过公开包获取清单进度并在 README 验证示例」，无阻塞边；允许文件恰为 src/notes/checklist.py、src/notes/__init__.py、README.md 与 TA 新建的 tests/test_progress.py；既有 tests/test_checklist.py 与 pyproject.toml 不改；测试由 TA 先提交并冻结，EXECUTE 不改测试。不拆不合并。"
+  }
+ ],
+ "seams": [
+  {
+   "id": "S1",
+   "modules": [
+    "notes"
+   ],
+   "rationale": "调用方只使用公开 notes 包，这是最高外部接口。通过该包验证摘要、旧 API 和 README doctest，无需新增内部测试边界。",
+   "catches": "公开导出遗漏，字典结构或类型错误，计数口径漂移，大小写/嵌套/重复处理错误，舍入错误，空清单语义错误，旧接口回归，文档示例缺失或输出漂移。",
+   "misses": "无法仅凭输出证明复用了 items、实现位于指定模块或未做内部重构；这些要求通过 AC8 代码审查核实。README 解释性文字的完整性通过 AC7 审查。"
+  }
+ ],
+ "tickets": [
+  {
+   "id": "T1",
+   "title": "通过公开包获取清单进度并在 README 验证示例",
+   "status": "ready-for-agent",
+   "what_to_build": "调用方仅导入公开包，即可从 Markdown 清单字符串取得完成数、总数和完成百分比；空清单的完成率明确为 None，旧解析行为不变，并能复制 README 示例得到所展示的结果。",
+   "acceptance": [
+    "AC1：仅 import notes 后可同步调用 notes.progress(str)。返回值类型为普通 dict，键集合恰为 completed、total、percent；completed 和 total 的精确类型为 int，非空时 percent 的精确类型为 float。notes.__all__ 包含 progress、Item、items，原有公开符号仍可访问。",
+    "AC2：摘要计数与公开 notes.items(text) 一致。覆盖空格缩进的父子条目各计、重复条目分别计、x/X 均完成、未完成项及非清单行混合；固定输入 '- [x] write\\n- [ ] review\\n- [X] ship\\n' 返回 completed=2、total=3。另覆盖当前不识别的星号/加号列表、tab 缩进和缺少必要尾随空格的标记，以及当前仍会识别的围栏代码块内清单行，确保不扩展或收紧现有语法。",
+    "AC3：非空时 percent 精确遵循 round(completed / total * 100, 2)，且为 float。至少覆盖 1/3=33.33、2/3=66.67、1/6=16.67、全部未完成=0.0、全部完成=100.0；不返回 0–1 比例或带百分号字符串。",
+    "AC4：空字符串、纯空白和只含非清单文本时均精确返回 {'completed': 0, 'total': 0, 'percent': None}；percent is None，不返回 0.0 或 100.0，不抛除零异常。",
+    "AC5：公开 notes.items 与 notes.Item 保持原有可观察行为；通过新增公开包测试验证条目顺序、text/done/indent、大小写完成标记、非清单行忽略和 Item 的不可变性；既有解析测试继续全绿且文件不改。",
+    "AC6：README 含可复制的 pycon 交互示例，自行 import notes；混合文本固定为 '- [x] write\\n- [ ] review\\n- [X] ship\\n'，展示完整结果 {'completed': 2, 'total': 3, 'percent': 66.67}；空字符串展示完整结果 {'completed': 0, 'total': 0, 'percent': None}。新增测试读取 README，用标准库 doctest 在独立命名空间执行示例并断言零失败，同时断言上述两种摘要调用及其预期输出实际存在且被执行；空文档或删掉任一示例不得通过。",
+    "AC7：review-only：README 明确解释 percent 是 0–100 的百分数、按 Python round 舍入到两位小数、空清单为 None，以及统计口径沿用 items；不要求其他解释文案逐字匹配。",
+    "AC8：review-only：progress 实现在现有清单模块中，复用 items 返回结果计算，并经公开包与 __all__ 导出；Item 和 items 的现有实现及签名保持原样。不新增结果类、模块、依赖、配置、非字符串输入协议或无关重构。"
+   ],
+   "depends_on": [],
+   "files": [
+    "src/notes/checklist.py",
+    "src/notes/__init__.py",
+    "README.md",
+    "tests/test_progress.py"
+   ],
+   "seam": "S1"
+  }
+ ],
+ "dag": {
+  "T1": []
+ },
+ "allowed_paths": [
+  "src/notes/checklist.py",
+  "src/notes/__init__.py",
+  "README.md",
+  "tests/test_progress.py"
+ ],
+ "protected_paths": [
+  "tests/test_checklist.py",
+  "pyproject.toml"
+ ],
+ "test_command": "PYTHONPATH=src python3 -m pytest -q tests",
+ "ambiguities": [],
+ "needs_research": [],
+ "deviations": [
+  {
+   "skill": "to-spec",
+   "deviation": "不发布 tracker issue，不调用配置 tracker 的 slash command，也不写 spec 文件；完整 spec 随 PlanHandoff 返回，由父会话原样持久化。",
+   "reason": "PLAN 只读，pipeline 将发布目标替换为 handoffs/plan-handoff.json。"
+  },
+  {
+   "skill": "to-tickets",
+   "deviation": "不发布 tracker issue 或创建本地票据文件；已批准票据及 blocking edges 随 PlanHandoff 返回，由父会话持久化。",
+   "reason": "PLAN 只读，pipeline 将发布目标替换为 handoffs/plan-handoff.json。"
+  }
+ ]
+}

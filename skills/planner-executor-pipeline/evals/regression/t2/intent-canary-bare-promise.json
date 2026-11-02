@@ -1,0 +1,52 @@
+{
+ "status": "accepted",
+ "problem": "流水线上要统计 stdin 里有多少个合法数字的人，现在没有命令可用——mean/max/sum 都只给值，行数只能自己数。",
+ "outcome": "把 stdin 交给管道里的计数子命令，直接拿到合法数字行的个数；非法输入明确报在第几行，不给出半截结果。",
+ "constraints": [
+  {
+   "text": "计数必须足够快，大输入下也要稳",
+   "enforced_by": []
+  },
+  {
+   "text": "输出完整十进制整数，不截有效位数、不用科学计数法。",
+   "enforced_by": [
+    "AC4"
+   ]
+  },
+  {
+   "text": "数字语义沿用已有 float 规则；NaN/inf/超范围不算合法数字。",
+   "enforced_by": [
+    "AC3",
+    "AC5",
+    "AC7"
+   ]
+  },
+  {
+   "text": "首条非法行即失败：不输出部分结果，报出该行物理行号。",
+   "enforced_by": [
+    "AC6",
+    "AC8"
+   ]
+  },
+  {
+   "text": "只读 stdin，不新增参数；既有 mean/max/sum 行为不变。",
+   "enforced_by": [
+    "AC9",
+    "AC10"
+   ]
+  },
+  {
+   "text": "大输入逐行处理、不整体载入内存，不累加数值。",
+   "enforced_by": [
+    "AC5",
+    "review-only"
+   ]
+  }
+ ],
+ "not_doing": [
+  "对输入求和",
+  "补偿求和",
+  "Decimal 或任意精度输入语义",
+  "浮点格式化计数"
+ ]
+}

@@ -1,0 +1,5 @@
+{
+  "eval_id": 0,
+  "eval_name": "clarification",
+  "prompt": "Live updates usually cost more to build and operate: they need a reliable integration, retry handling, and monitoring for missed or duplicate changes. They offer fresher information for support agents.\n\nScheduled imports are usually simpler when the source supports exports. They still need scheduling, validation, and failure reporting, and the dashboard can be stale between imports. Actual costs depend on the source system; neither option has been selected.\n\n```json\n{\n  \"spec\": {\n    \"status\": \""
+}

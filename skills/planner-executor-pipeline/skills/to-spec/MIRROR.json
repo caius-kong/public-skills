@@ -1,0 +1,6 @@
+{
+  "mirror_of": "~/.agents/skills/to-spec/SKILL.md",
+  "upstream_sha256": "43ad9cf318e5e7d3d1fa360253a37021796dc87a0c2e595ad262661a10f85088",
+  "body_sha256": "9bc986bf599128bea79697a60115308c8433715674952c1832408aac7e823044",
+  "note": "body byte-identical to upstream; only disable-model-invocation was dropped"
+}

@@ -1,0 +1,5 @@
+{
+  "eval_id": 1,
+  "eval_name": "discussion",
+  "prompt": "The evaluation ended in the **same PLAN run**, without a product ruling. The first-release update method and import cadence remain unresolved. No completed PlanHandoff is claimed.\n\n```json\n{\n  \"status\": \"fixture_ended_without_product_ruling\",\n  \"settled_requirements\": [\n    \"Internal customer-support dashboard replacing a shared spreadsheet\",\n    \"Ticket statuses\",\n    \"Daily summary\"\n  ],\n  \"ambiguities\": [\n    \"First-release update method: live updates versus scheduled imports remains unresolv"
+}
