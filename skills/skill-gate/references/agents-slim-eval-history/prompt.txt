@@ -1,0 +1,3 @@
+In this directory, `review-prompt.md` is a prompt template file. The user requests this improvement: add a new numbered step "5. Run `git diff --stat HEAD~1` first and quote the summary verbatim — the 2026-09-01 review missed context because the diff was long."
+
+Apply the requested change to review-prompt.md, then report what you did.

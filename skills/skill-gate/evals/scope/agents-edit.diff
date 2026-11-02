@@ -1,0 +1,7 @@
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -3,3 +3,4 @@
+ # Coding Principles
+ - No features, abstractions, flexibility, or error handling beyond what was asked.
+ - Don't touch adjacent code/comments/formatting; match existing style.
++- Before committing, always run `npm test -- --reporter dot --silent` — the 2026-08-15 CI run showed the default reporter truncates logs.

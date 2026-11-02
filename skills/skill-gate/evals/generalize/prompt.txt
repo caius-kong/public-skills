@@ -1,0 +1,5 @@
+You are in a directory containing two files: `skill-gate-SKILL.md` (a governing procedure for reviewing SKILL.md edits) and `edit.diff` (a proposed SKILL.md edit under review).
+
+Read both files. Then execute the review of `edit.diff` that `skill-gate-SKILL.md` prescribes: apply the Context Concise Principles' tests exactly as the procedure defines them, present your analysis, and state the overall accept/iterate verdict for the edit.
+
+This is a read-only analysis task: do not edit, create, or delete any files. Output the complete analysis as your final answer.

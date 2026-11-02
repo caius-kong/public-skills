@@ -1,0 +1,7 @@
+--- a/skills/cache-warmer/SKILL.md
++++ b/skills/cache-warmer/SKILL.md
+@@ -5,4 +5,5 @@
+ ## Warm Procedure
+ 1. Run `scripts/warm.py --all` to refresh the caches.
+ 2. Report warmed cache names and total duration to the user.
++3. Use `warm.py --workers 8` — the 2026-07-22 cold-start incident showed 2 workers missed the deadline.

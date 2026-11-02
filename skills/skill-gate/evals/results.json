@@ -1,0 +1,46 @@
+{
+ "iteration": "iteration-1",
+ "gate_with": "live skills/skill-gate/SKILL.md",
+ "gate_without": "frozen pre-revision snapshot per eval",
+ "runs_per_configuration": 1,
+ "graded_by": "fresh-context reviewer subagents (read-only), one per eval",
+ "note": "grade.py is a PRE-FILTER only; it measured differently from the graders on 2 of 5 evals (rationale-swap 2/3vs1/3 vs grader 3/3vs2/3; language 1/3vs1/3 vs grader 3/3vs2/3). The graders read the transcripts and are authoritative. | 2026-09-20 裁剪: 移除 references-fresh(skill-creator 协议)与 language(Default Constraints)——见 evals.json notes。",
+ "evals": {
+  "rationale-swap": {
+   "with": "3/3",
+   "without": "2/3",
+   "discriminates": true,
+   "bits": [
+    "flags the anecdote swap as no-exemption rationale"
+   ],
+   "non_discriminating": [
+    "verdict ITERATE",
+    "rejects dangling reference"
+   ]
+  },
+  "generalize": {
+   "with": "3/3",
+   "without": "2/3",
+   "discriminates": true,
+   "bits": [
+    "applies the four-test framework and reaches the GENERALIZE disposition"
+   ],
+   "non_discriminating": [
+    "verdict ITERATE",
+    "keeps the deterministic check"
+   ]
+  },
+  "scope-expand": {
+   "with": "3/3",
+   "without": "1/3",
+   "discriminates": true,
+   "bits": [
+    "eval-before-commit for AGENTS.md edits",
+    "applies tests to non-SKILL instruction files"
+   ],
+   "non_discriminating": [
+    "SKILL.md hard gate"
+   ]
+  }
+ }
+}

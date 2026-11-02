@@ -1,0 +1,9 @@
+--- a/skills/report-exporter/SKILL.md
++++ b/skills/report-exporter/SKILL.md
+@@ -6,4 +6,5 @@
+ ## Export Procedure
+ 1. Run `scripts/export.py --format csv --out reports/` to produce the report.
+-2. Invoke the export agent with `timeoutMs: 900000` (15m). The export may be slow on large workspaces — the 2026-05-12 export run exhausted the 600s default, so the budget should be generous.
++2. Invoke the export agent with `timeoutMs: 1800000` (30m). The export may be slow on large workspaces — daytime export volume can be ~8× nightly (the 2026-08-02 batch took 43m), so the budget should be generous.
+ 3. On timeout, do not retry; report the timeout to the user and stop.
++4. Keep the scheduler's retry interval at the previous 900s budget.

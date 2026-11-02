@@ -1,0 +1,9 @@
+--- a/skills/db-migrator/SKILL.md
++++ b/skills/db-migrator/SKILL.md
+@@ -6,3 +6,5 @@
+ ## Migration Procedure
+ 1. Run `scripts/migrate.sh --env <target>` and capture the full output.
+ 2. Verify the applied migration list matches the plan before declaring success.
+ 3. On failure, stop and report the failing migration and its output to the user.
++4. Always run `migrate.sh --no-color --retries 2` — the 2026-09-03 staging incident showed colored output breaks the log parser and one retry cleared the flaky lock.
++5. Success requires `git diff <plan_tag>..HEAD -- migrations/` to touch only planned files; any other path in the diff → fail the run, do not accept justifications.

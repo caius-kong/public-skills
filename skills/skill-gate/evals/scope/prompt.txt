@@ -1,0 +1,5 @@
+You are in a directory containing three files: `skill-gate-SKILL.md` (a governing procedure for reviewing edits to instruction files), `skill-edit.diff` (a proposed edit to a skill's SKILL.md), and `agents-edit.diff` (a proposed edit to an AGENTS.md).
+
+Read all three files. For each edit, execute the review that `skill-gate-SKILL.md` prescribes for that file type: apply its procedures and tests exactly as written, present your analysis, and state an overall accept/iterate verdict for each edit.
+
+This is a read-only analysis task: do not edit, create, or delete any files. Output the complete analysis as your final answer.
