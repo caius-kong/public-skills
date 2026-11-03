@@ -16,9 +16,13 @@ references/
   artifacts.md              # 五个 handoff / GATE 七检查 / 归档模板
   pi-adapter.md             # pi 落地：agent 映射、派发形态、已知限制
   references-index.md       # 每阶段复用的 skill 与其绝对路径、允许的偏离
+  intent-template.md        # spec.intent 的字段表与强制者约定
 scripts/
+  preflight.py              # 运行前解析 8 条外部依赖路径，缺则打印安装命令并非零退出
   verify-models.py          # 核对子 run 实际生效的 model/thinking
   check-verdict.py          # 核对 CONFORMANCE 的 answer_key
+  gate.py                   # GATE 七检查的唯一实现
+  intent-check.py           # spec.intent 的 C0–C9 校验
 evals/                      # 回归夹具（改配置/改契约前必须全跑）
 ```
 
