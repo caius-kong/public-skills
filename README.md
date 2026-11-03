@@ -39,9 +39,9 @@ to re-copy after every update.
 ## Skills
 
 <!-- skills-list-start -->
-- **[install-pi-on-remote](./skills/install-pi-on-remote/)** — Deploy a remote macOS Mac as an agents server: configure dedicated passwordless SSH over LAN or Tailscale, run the repository bootstrap.sh to install Pi, install Herdr with its…
-- **[planner-executor-pipeline](./skills/planner-executor-pipeline/)** — Plan→Test Author→Execute→Gate→Conformance staged pipeline for turning a goal into shipped, verified code.
-- **[skill-gate](./skills/skill-gate/)** — Extend skill-creator with Context Concise Principles and change-based verification.
+- **[install-pi-on-remote](./skills/install-pi-on-remote/SKILL.md)** — Deploy a remote macOS Mac as an agents server: configure dedicated passwordless SSH over LAN or Tailscale, run the repository bootstrap.sh to install Pi, install Herdr with its Pi integration and its agent skill, and verify both direct-SSH Pi and Herdr-managed remote Pi instances. Use whenever the user asks to install/reinstall Pi or Herdr on another Mac, set up remote SSH agents, or deploy an agents server. macOS only.
+- **[planner-executor-pipeline](./skills/planner-executor-pipeline/SKILL.md)** — Plan→Test Author→Execute→Gate→Conformance staged pipeline for turning a goal into shipped, verified code. Use when the user wants a goal planned and implemented end-to-end with contract handoffs between stages, wants an auditable multi-stage agent workflow (PLAN / TEST_AUTHOR / EXECUTE / GATE / CONFORMANCE), or asks for /planner-executor-pipeline; also use when discussing or modifying this pipeline's protocol.
+- **[skill-gate](./skills/skill-gate/SKILL.md)** — Extend skill-creator with Context Concise Principles and change-based verification. Use when creating or modifying a skill, including bundled scripts, configuration and resources; editing AGENTS.md or prompt templates; or reviewing whether a change was adequately tested.
 <!-- skills-list-end -->
 
 ## License

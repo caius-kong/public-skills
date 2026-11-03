@@ -55,22 +55,58 @@ def read_targets(transcript):
     return targets
 
 
+def selftest():
+    """Both directions on synthetic transcripts: in order passes, out of order fails."""
+    import json as _json
+    import tempfile
+
+    def transcript(order):
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as fh:
+            for name in order:
+                fh.write(_json.dumps({
+                    "recordType": "tool_start",
+                    "toolName": "read",
+                    "argsPayload": _json.dumps({"path": f"~/.agents/skills/{name}/SKILL.md"}),
+                }) + "\n")
+            return fh.name
+
+    good, bad = transcript(["grilling", "to-spec", "to-tickets"]), transcript(["to-spec", "grilling"])
+    cases = [(good, 0), (bad, 1)]
+    failures = 0
+    for path, want in cases:
+        got = judge(path, "grilling,to-spec,to-tickets")
+        ok = got == want
+        print(f"{'PASS' if ok else 'FAIL'}  {Path(path).name}: exit={got} want={want}")
+        failures += 0 if ok else 1
+    print(f"{failures} case(s) misbehaved")
+    return 1 if failures else 0
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--transcript", required=True)
-    ap.add_argument("--expect", required=True, help="comma-separated skill names, in required order")
+    ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--transcript")
+    ap.add_argument("--expect", help="comma-separated skill names, in required order")
     args = ap.parse_args()
+    if args.selftest:
+        return selftest()
+    if not args.transcript or not args.expect:
+        ap.error("--transcript and --expect are required unless --selftest")
 
-    if not Path(args.transcript).exists():
-        print(f"CANNOT JUDGE: no transcript at {args.transcript}")
+    return judge(args.transcript, args.expect)
+
+
+def judge(transcript, expect):
+    if not Path(transcript).exists():
+        print(f"CANNOT JUDGE: no transcript at {transcript}")
         return 2
 
-    targets = read_targets(args.transcript)
+    targets = read_targets(transcript)
     if not targets:
         print("CANNOT JUDGE: transcript has no read records with an identifiable path")
         return 2
 
-    expected = [s.strip() for s in args.expect.split(",") if s.strip()]
+    expected = [name.strip() for name in expect.split(",") if name.strip()]
     problems, cursor = [], 0
     for name in expected:
         # A reused skill is read either at the upstream path or at this skill's
