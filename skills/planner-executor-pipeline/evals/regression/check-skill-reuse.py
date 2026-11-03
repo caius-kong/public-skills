@@ -109,8 +109,7 @@ def judge(transcript, expect):
     expected = [name.strip() for name in expect.split(",") if name.strip()]
     problems, cursor = [], 0
     for name in expected:
-        # A reused skill is read either at the upstream path or at this skill's
-        # mirror of it; both end in /<name>/SKILL.md, which is what identifies it.
+        # A reused skill is identified by its own directory: /<name>/SKILL.md.
         suffix = f"/{name}/SKILL.md"
         found = None
         for index in range(cursor, len(targets)):

@@ -50,7 +50,7 @@ python3 evals/regression/check-config.py    # T1：声明的 model@thinking 与�
 
 ## 运行时依赖
 
-- **既有 skill**：`grilling`、`tdd` 上游未隐藏，直接在 agent 的 `skills:` 里点名注入；`to-spec`、`to-tickets` 上游隐藏（pi-subagents 会把它们从子 prompt 里滤掉），故按绝对路径 read；`research`、`code-review` 服务的是内置 agent，同样只能按绝对路径 read。细节见 `references/references-index.md`。
+- **既有 skill**：外部 skill 一律按 `~/.agents/skills/<name>/SKILL.md` read；agent 的 `skills:` 只留本 skill 自身契约，`skillPath` 不再指向任何副本。细节见 `references/references-index.md`。
 - **pi-subagents**：派发、workflow、native supervisor channel（访谈回执）。
 - **内置 agent**：`scout` / `researcher`（EVIDENCE）、`reviewer`（CONFORMANCE）。
 

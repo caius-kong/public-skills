@@ -604,7 +604,31 @@ oracle 审完整 diff 给 `FIX_REQUIRED`，B1 属实：`--latest` 用文件 mtim
 
 结果可区分：产出的章节是 `## Problem Statement` / `## Solution` / `## User Stories`（24 条 `As a … I want … so that …`）/ `## Implementation Decisions` / `## Testing Decisions` / `## Out of Scope`，tickets 是 `**What to build:**` / `**Blocked by:**` / `**Status:**` + 勾选式验收 + 依赖图，并复述了「Existing seams should be preferred」「prior art for the tests」两条规则。改写要点会丢掉这些结构。该 worker 还正确地拒绝了在仓库缺失时编造 seams（先 `contact_supervisor`），说明 read 路径没有削弱它对 skill 内「先探仓库」要求的服从。
 
-**改动**：删除 `skills/` 镜像与 `MIRROR.json`、删除 `scripts/sync-skill-mirrors.py`；`agents/plan.md` 的 `skills:` 只留 `grilling`，`skillPath` 只留 `..`；SKILL.md 新增 `## Preflight`（路径 + 缺了就装的命令）；`check-paths.py` 现在也校验 `~/.agents/skills/...` 这类外部依赖路径（改错一个立刻 FAIL）。
+**改动**：删除 `skills/` 镜像与 `MIRROR.json`、删除 `scripts/sync-skill-mirrors.py`；`agents/plan.md` 的 `skills:` 只留 `planner-executor-pipeline`（后续 Round 25 后所有外部 skill 改 read）；SKILL.md 新增 `## Preflight`（路径 + 缺了就装的命令）；`check-paths.py` 现在也校验 `~/.agents/skills/...` 这类外部依赖路径（改错一个立刻 FAIL）。
 
 **代价**：依赖以绝对路径写在文档里，上游换安装位置就会断——由 `run-evals.sh` 里的 `check-paths.py` 兜住。
 
+
+## Round 25（2026-11-03）— 统一 read 依赖后的真实无监督回归（`group_by_tag`）
+
+外部依赖改成「一律 read 安装路径、仓库无副本」之后，跑一次真实无监督交付验证流程本身：herdr 起的独立 agent 当 orchestrator，我只当用户（`skill:agent-team`）。仓库 `/tmp/pe3/repo`（`shelf` 包，2 个既有测试，base `85d7205`），任务一句话：`group_by_tag(items)` 按 tag 分组。
+
+**流程正确性（本轮真正要验的东西）**：
+
+| 环节 | 证据 |
+|---|---|
+| PLAN 读依赖 | `check-skill-reuse.py` 对 PLAN transcript：`grilling` → `to-spec` → `to-tickets` **按序 read 绝对路径**，12 次 read |
+| TEST_AUTHOR / EXECUTE | 各自 transcript 里 read 了 `tdd`（`~/.agents/skills/tdd/SKILL.md`） |
+| 访谈 | 6 轮（预算/3 问/Q4 共确认/Q5 seam/Q6 票形/冻结），每题带推荐，我全 `y` |
+| 冻结 | AC1–AC8 + `allowed_paths` 3 项 + `protected_paths` |
+| TA `593166c` | 只加 `tests/test_group_by_tag.py`（378 行，20 个函数，红 19×AttributeError + 1×`__all__`） |
+| EXECUTE `c0cbf84` | 2 个源文件；`items.py` 实现 4 行有效代码，零分支 |
+| GATE | 重跑 7/7 PASS（22 passed，BASE=2→HEAD=22，AC1–AC8 各自有同名测试） |
+| CONFORMANCE | 正式 `PASS`；**它自己造 canary**（在 `/tmp/pe3/canary` 副本里注入查表作弊，通过全部 22 测试）→ `FIX_EXECUTE` |
+| 归档 `77a34c9` | `docs/specs/2026-11-03-group-by-tag.md`，`## Intent` / `Status: accepted` 在最前；`intent-check --require-accepted` PASS |
+
+**人类介入**：6 次访谈答复 + 2 次权限批准（canary 副本的写+提交）。**0 次操作性 nudge** —— 阶段之间它自己走。
+
+**本轮抓到的缺陷（工具侧）**：`herdr-watch.py` 在父会话等子 agent 时**立刻返回**——父的 turn 已结束、状态是 `done`，但 pane 里写着 `subagents still running`。表现是 watchdog 空转、我不断重复读同一屏。修法：pane 出现 `subagents still running` 时不算「需要人」，继续阻塞。已加进 `agent-team/evals`（待补夹具，本轮先用实测验证）。
+
+**它自己指出的余量**：GATE#4「通过数严格递增」可被灌水测试满足；这次靠 AC 命名 + 黑盒 + CONFORMANCE 逐条 answer_key 兜住，不是靠该指标。与既有待办一致。
