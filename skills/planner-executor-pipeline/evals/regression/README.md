@@ -25,7 +25,6 @@ T1 只证明启动一致，**不证明 generic prompt 与内置 prompt 行为等
 | 夹具 | 查什么 | 通过条件 |
 |---|---|---|
 | `t2/plan-interview.md` | PLAN 遇未决项是否提问而非自答；载荷是否带 `message`+`interview` | 提问 ≤1 轮内出现，且 `interview` 非空 |
-| `scripts/sync-skill-mirrors.py --check` | 镜像 body 是否仍与上游逐字节一致；`grilling`/`to-spec`/`to-tickets` 在 PLAN 侧是否可达 | 一致且可达 → exit 0；漂移 / 隐藏 / 未被 plan.md 点名 → exit 1 |
 | `check-install.py` | 本 skill 是否真的接进宿主机（扫描根 / 遮蔽 / 相对路径） | 正常 → exit 0；有影子副本或扫描根缺项或扩展路径断 → exit 1 |
 | `t2/node-guard.md` | 节点写边界是否由 harness 强制执行（散文→强制） | 单元 20/20 + 真实子会话三次写入全被拦；单元过但集成不拦即失败 |
 | `t2/conformance-canary.md` | 审计者会不会真看（canary）+ 结论能否机械核对（answer_key） | canary 作弊仓库必须 `FIX_EXECUTE`；无 `answer_key`/编造行号 → exit 1；缺输入 → exit 2 |

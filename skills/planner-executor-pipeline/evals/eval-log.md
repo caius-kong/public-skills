@@ -595,3 +595,16 @@ oracle 审完整 diff 给 `FIX_REQUIRED`，B1 属实：`--latest` 用文件 mtim
 它按 `artifacts.md` #2 逐条排除了 `orchestrator_commits` 放行与"越界源于更早轮 → REPLAN"，判定为 FIX_EXECUTE → 指回 T1；随后自己追问"修复动作要写哪些路径"，发现删除 `src/ledger/stray.py` 本身就是 `allowed_paths` 之外的写、`guard-execute.js` 会拦，于是判定 **FIX_EXECUTE 无合法动作 → REPLAN（在 allowed_paths 里显式规定 revert）或 HALTED**，并援引 SKILL.md「不得反复派发空任务」。它还提醒 CONFORMANCE 的 verdict 是旧 HEAD 上的，重派后必须重跑。
 
 **决定不改契约**：这个边界（修复动作落在 allowed_paths 之外）确实没被逐字写出，但 SKILL.md 已有"不得反复派发空任务"+「修复需改测试 → REPLAN/HALTED」的同型条款，而实测显示模型**靠原则就能到达正确结论**。按 skill-gate 的 delete test（"LLM 能可靠到达的判断，写出来是冗余"），加一条只复述原则的条文属于补丁式堆积，不加。记录在案，等出现一次真实误路由再补。
+
+## Round 24（2026-11-03）— 外部 skill 依赖：镜像 → read 绝对路径
+
+`to-spec` / `to-tickets` 上游带 `disable-model-invocation: true`，pi-subagents 在 `buildSkillInjection` 处硬过滤，注入送不进去。此前的解法是在本 skill 里放一份只去掉那一行的逐字节镜像 + `sync-skill-mirrors.py` 生成/校验。问题是：仓库里存着别人的内容，还要维护一个脚本证明它没漂移。
+
+**验证 read 方案**：给一个 worker 两件事——read `~/.agents/skills/to-spec/SKILL.md` 后照它的模板产出 spec、read `to-tickets` 后照它拆 tickets，任务本身是一句话需求（给仓库加 `--verbose`）。
+
+结果可区分：产出的章节是 `## Problem Statement` / `## Solution` / `## User Stories`（24 条 `As a … I want … so that …`）/ `## Implementation Decisions` / `## Testing Decisions` / `## Out of Scope`，tickets 是 `**What to build:**` / `**Blocked by:**` / `**Status:**` + 勾选式验收 + 依赖图，并复述了「Existing seams should be preferred」「prior art for the tests」两条规则。改写要点会丢掉这些结构。该 worker 还正确地拒绝了在仓库缺失时编造 seams（先 `contact_supervisor`），说明 read 路径没有削弱它对 skill 内「先探仓库」要求的服从。
+
+**改动**：删除 `skills/` 镜像与 `MIRROR.json`、删除 `scripts/sync-skill-mirrors.py`；`agents/plan.md` 的 `skills:` 只留 `grilling`，`skillPath` 只留 `..`；SKILL.md 新增 `## Preflight`（路径 + 缺了就装的命令）；`check-paths.py` 现在也校验 `~/.agents/skills/...` 这类外部依赖路径（改错一个立刻 FAIL）。
+
+**代价**：依赖以绝对路径写在文档里，上游换安装位置就会断——由 `run-evals.sh` 里的 `check-paths.py` 兜住。
+

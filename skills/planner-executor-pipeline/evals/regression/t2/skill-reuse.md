@@ -16,6 +16,6 @@ python3 evals/regression/check-skill-reuse.py --transcript <child>_plan_transcri
 - 产物侧：`spec` 段按 to-spec 模板的六节组织；`tickets` 是垂直切片并带 blocking edges；`seams` 与 `deviations` 齐备。
 - 行为侧：**不重问 brief 已定项**（grilling 的 frontier 语义），每个问题带推荐答案且「是」即接受。
 
-事实（2026-10-23 更新）：`grilling` 上游**未**隐藏，`to-spec` / `to-tickets` 隐藏。pi-subagents 在 `buildSkillInjection` 收口处硬过滤隐藏 skill，`skills:` 点名也送不进去 —— 所以本 skill 为后两者提供 `skills/` 镜像（body 逐字节等于上游，只去掉隐藏标记），并在 `agents/plan.md` 里 `skills:` 点名三个、`skillPath` 加上 `../skills`。
+事实（2026-10-23 更新）：`grilling` 上游**未**隐藏，`to-spec` / `to-tickets` 隐藏。pi-subagents 在 `buildSkillInjection` 收口处硬过滤隐藏 skill，`skills:` 点名也送不进去 —— 所以 `agents/plan.md` 只注入 `grilling`，后两个用 read 打开 `~/.agents/skills/<name>/SKILL.md`（不再放镜像副本）。
 
 实测（2026-10-23）：PLAN 的 `<available_skills>` 里出现 `planner-executor-pipeline / grilling / to-spec / to-tickets` 四项；随后按 grilling → to-spec → to-tickets 顺序 read 三者（transcript 证据见 `check-skill-reuse.py` 正例 exit 0，乱序/缺失负例 exit 1）。

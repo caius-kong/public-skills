@@ -17,6 +17,25 @@ A prompt-driven workflow: the parent orchestrates stages and passes contract art
 
 # 一、工作流状态机
 
+## Preflight
+
+本 skill 编排的每个外部 skill 都按已安装路径 read 使用；仓库里不放任何副本。
+
+- `grilling`: `~/.agents/skills/grilling/SKILL.md`
+  - If missing: `npx skills add mattpocock/skills --skill grilling -g -y`
+- `to-spec`: `~/.agents/skills/to-spec/SKILL.md`
+  - If missing: `npx skills add mattpocock/skills --skill to-spec -g -y`
+- `to-tickets`: `~/.agents/skills/to-tickets/SKILL.md`
+  - If missing: `npx skills add mattpocock/skills --skill to-tickets -g -y`
+- `tdd`: `~/.agents/skills/tdd/SKILL.md`
+  - If missing: `npx skills add mattpocock/skills --skill tdd -g -y`
+- `research`: `~/.agents/skills/research/SKILL.md`
+  - If missing: `npx skills add mattpocock/skills --skill research -g -y`
+- `code-review`: `~/.agents/skills/code-review/SKILL.md`
+  - If missing: `npx skills add mattpocock/skills --skill code-review -g -y`
+
+路径由仓库根的 `run-evals.sh` 机械校验；缺任何一个，run 之前就失败，不会跑到一半才发现。
+
 ## 节点序
 
 ```
@@ -166,7 +185,7 @@ Agent(description="<节点名>", prompt="<组装结果>", model=@<节点符号>)
 ## PLAN（推理型 · 只读）
 
 - **职责**：消费证据包与既有 brief，给出**深度推理后的规划见解**：spec、tickets、DAG 与路径边界。
-- **内部步骤**：按顺序逐项执行三个**注入的 skill**——`grilling` → `to-spec` → `to-tickets`（注入方式见 `references/references-index.md`）。不自行改写、不跳步、不合并。这三步之外的差异只有「发布目标」（无 issue tracker，产物是 `handoffs/plan-handoff.json`），必须逐条记入 PlanHandoff 的 `deviations`；任何其它偏离都视为违反本节点契约。
+- **内部步骤**：按顺序逐项执行三个 skill——`grilling` → `to-spec` → `to-tickets`（`grilling` 注入，后两个用 read 打开绝对路径；见 `references/references-index.md`）。不自行改写、不跳步、不合并。这三步之外的差异只有「发布目标」（无 issue tracker，产物是 `handoffs/plan-handoff.json`），必须逐条记入 PlanHandoff 的 `deviations`；任何其它偏离都视为违反本节点契约。
 - **输入**：Evidence pack (referenced by path), brief, the full interview context from `state.interview_log`, and the **prior decisions**——父会话派发时把 `docs/specs/*.md` 的 `Settled decisions` 段与既有的 `GLOSSARY.md` / ADR 路径写进 task prompt。取舍：与本次目标同领域的全收，其余只收最近 3 份（先例越多越容易误继承）。已定决策不得重问；**与本次需求冲突时必须显式指出冲突并重新裁定**，不得默默继承。
 - **输出**：PlanHandoff JSON（`references/artifacts.md`），含 `seams`（每票测试要打的边界；越少越好，理想 1 个）与 `decisions`（用户已裁定的决策，供归档沉淀）。
 - **只读状态（同业界 plan mode：先探索后规划，写入须待批准）**：

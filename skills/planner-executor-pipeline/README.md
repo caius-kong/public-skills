@@ -11,7 +11,6 @@ SKILL.md                    # 节点定义、路由表、用户确认点、跨�
 config.json                 # 每节点 model@thinking 推荐值
 config.template.json        # 同上，占位符版（换宿主/换模型时从这里改）
 agents/                     # 节点专用 agent 定义（plan / test-author / executor）
-skills/                     # to-spec / to-tickets 的镜像（body 与上游逐字节一致，只去掉隐藏标记）
 extensions/                 # 节点守卫（写边界）+ 访谈窗口
 references/
   artifacts.md              # 五个 handoff / GATE 七检查 / 归档模板
@@ -20,7 +19,6 @@ references/
 scripts/
   verify-models.py          # 核对子 run 实际生效的 model/thinking
   check-verdict.py          # 核对 CONFORMANCE 的 answer_key
-  sync-skill-mirrors.py     # 从上游生成镜像（--check 校验 body 未漂移）
 evals/                      # 回归夹具（改配置/改契约前必须全跑）
 ```
 
@@ -44,7 +42,6 @@ evals/                      # 回归夹具（改配置/改契约前必须全跑�
 
 ```bash
 python3 evals/regression/check-install.py   # 扫描根 / 遮蔽 / 相对路径 / 扩展是否存在
-python3 scripts/sync-skill-mirrors.py --check  # 镜像 body 与上游一致 + PLAN 侧三个 skill 可达
 node   evals/regression/check-node-guard.mjs # 节点写边界（20 条正负例，零模型调用）
 python3 evals/regression/check-config.py    # T1：声明的 model@thinking 与实际启动一致
 ```
@@ -53,7 +50,7 @@ python3 evals/regression/check-config.py    # T1：声明的 model@thinking 与�
 
 ## 运行时依赖
 
-- **既有 skill**：`grilling`、`tdd` 上游未隐藏，直接在 agent 的 `skills:` 里点名注入；`to-spec`、`to-tickets` 上游隐藏（pi-subagents 会把它们从子 prompt 里滤掉），故在 `skills/` 下放镜像；`research`、`code-review` 服务的是内置 agent，只能按绝对路径 read。细节见 `references/references-index.md`。
+- **既有 skill**：`grilling`、`tdd` 上游未隐藏，直接在 agent 的 `skills:` 里点名注入；`to-spec`、`to-tickets` 上游隐藏（pi-subagents 会把它们从子 prompt 里滤掉），故按绝对路径 read；`research`、`code-review` 服务的是内置 agent，同样只能按绝对路径 read。细节见 `references/references-index.md`。
 - **pi-subagents**：派发、workflow、native supervisor channel（访谈回执）。
 - **内置 agent**：`scout` / `researcher`（EVIDENCE）、`reviewer`（CONFORMANCE）。
 

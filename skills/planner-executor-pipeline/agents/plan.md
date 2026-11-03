@@ -6,14 +6,8 @@ thinking: medium
 systemPromptMode: replace
 inheritProjectContext: true
 inheritSkills: false
-skills:
-  - planner-executor-pipeline
-  - grilling
-  - to-spec
-  - to-tickets
-skillPath:
-  - ..
-  - ../skills
+skills: planner-executor-pipeline
+skillPath: ..
 async: true
 timeoutMs: 86400000
 subagentOnlyExtensions:
@@ -57,6 +51,16 @@ Preserve each exact user reply as context, keep settled decisions settled, and t
 Each native interview request can wait up to 24 hours, while the PLAN run has a separate 24-hour total-lifetime deadline measured from launch. Processing consumes run time; a later request does not extend the run deadline. A request expiry or explicit cancellation may produce a blocked handoff if the run can finalize normally. A hard stop or run-deadline kill may produce no handoff.
 
 The parent relays the original questions and user replies without semantic filtering or rewriting. PLAN determines whether the reply settles a decision. Continue in this run for ordinary discussion; use a new PLAN only after this run has actually ended and the parent has retained the available artifacts.
+
+## 三个 skill 怎么拿
+
+全部用 read 打开已安装的绝对路径，然后**逐条照做它的 Process 与模板**，不要改写成摘要：
+
+- `~/.agents/skills/grilling/SKILL.md`
+- `~/.agents/skills/to-spec/SKILL.md`
+- `~/.agents/skills/to-tickets/SKILL.md`
+
+文件不存在就停，在产出里写清缺哪个、需要跑哪条安装命令（见 SKILL.md 的 `## Preflight`），不要凭记忆代替。
 
 ## Intent
 

@@ -1,6 +1,0 @@
-{
-  "mirror_of": "~/.agents/skills/to-tickets/SKILL.md",
-  "upstream_sha256": "56ec23c5b2782785d4e65bff9e315b6d3aeb4ef977c174a219e99489fada1995",
-  "body_sha256": "ff230f40838f322c01a2bd8983f3228a5e1e31066bf1206d5f34d34e8252def8",
-  "note": "body byte-identical to upstream; only disable-model-invocation was dropped"
-}

@@ -8,24 +8,26 @@
 
 | 节点 | skill | 怎么拿到 |
 |---|---|---|
-| PLAN | `grilling` | 注入：上游未隐藏，`agents/plan.md` 的 `skills:` 直接点名 |
-| PLAN | `to-spec` | 注入：本 skill 的 `skills/to-spec/SKILL.md`（镜像） |
-| PLAN | `to-tickets` | 注入：本 skill 的 `skills/to-tickets/SKILL.md`（镜像） |
-| TEST_AUTHOR / EXECUTE | `tdd` | 注入：上游未隐藏，各 agent 的 `skills:` 点名 |
-| EVIDENCE | `research` | 绝对路径 read：`~/.agents/skills/research/SKILL.md`（内置 agent 无法注入） |
-| CONFORMANCE | `code-review` | 绝对路径 read：`~/.agents/skills/code-review/SKILL.md`（内置 reviewer 无法注入） |
+| PLAN | `grilling` | read 绝对路径：`~/.agents/skills/grilling/SKILL.md` |
+| PLAN | `to-spec` | read 绝对路径：`~/.agents/skills/to-spec/SKILL.md` |
+| PLAN | `to-tickets` | read 绝对路径：`~/.agents/skills/to-tickets/SKILL.md` |
+| TEST_AUTHOR / EXECUTE | `tdd` | read 绝对路径：`~/.agents/skills/tdd/SKILL.md` |
+| EVIDENCE | `research` | read 绝对路径：`~/.agents/skills/research/SKILL.md` |
+| CONFORMANCE | `code-review` | read 绝对路径：`~/.agents/skills/code-review/SKILL.md` |
 
-PLAN 的三步是**注入的 skill**，不是引用文件：`agents/plan.md` 里 `skills: [grilling, to-spec, to-tickets]` 加 `skillPath: [.., ../skills]`，子 agent 的 `<available_skills>` 里直接出现这三项，按顺序逐个执行其原文。
+每个节点都**执行 skill 原文**，不是引用要点；所有外部 skill 一律 read 绝对路径（原因见下），按顺序逐个执行其 Process 与模板。
 
 **怎么执行**：把 skill 的原文当成本步骤的流程照做，**不要凭记忆复述它的要点**。文件里的 `/command` 形式与 tracker 发布在子 agent 里不可用，按下面「允许的偏离」处理；其余步骤（访谈的 design tree 与 frontier 规则、spec 模板、垂直切片与 blocking edges、seam 约定、red→green 循环、双轴评审）**必须原样执行**。
 
-## 镜像（mirror）为什么存在
+## 为什么一律 read，不放副本也不靠注入
 
-`to-spec` 与 `to-tickets` 上游带 `disable-model-invocation: true`，pi-subagents 在 `buildSkillInjection` 这个唯一收口处把这类 skill 从子 agent 的 prompt 里硬过滤掉——`skills:` 显式点名也送不进去。镜像保留上游 body **逐字节不变**，只去掉那一行标记，于是它重新成为 PLAN 可见的 skill。
+两条路都不走：注入只在「上游没隐藏该 skill」时有效，而 pi-subagents 在 `buildSkillInjection` 处会把 `disable-model-invocation: true` 的 skill 硬过滤掉——`to-spec` / `to-tickets` 正是如此，且上游随时可以给任何一个 skill 加这行标记；副本则要把别人的内容存在本仓库里并保持同步。read 安装路径与两者都无关。
 
-- 生成：`python3 scripts/sync-skill-mirrors.py`
-- 校验：`python3 scripts/sync-skill-mirrors.py --check`（body 与上游不一致即失败；`grilling`、`to-spec`、`to-tickets` 三项在 PLAN 侧的可达性也在这里查）
-- 镜像不进主会话：pi 的 skill 扫描在含 `SKILL.md` 的目录处停止递归，所以 `skills/` 子目录只有 `skillPath` 点名了它的 agent 才看得见。
+早先的做法是镜像：在本 skill 里放一份 body 逐字节相同、只去掉那一行的副本，再用 `sync-skill-mirrors.py` 生成与校验。代价是仓库里存着别人的内容，且每次上游改动都要重新生成并证明没漂移。
+
+现在改成 read 绝对路径。**实测依据**（`evals/eval-log.md` Round 24）：给一个 worker 两件事——read `to-spec` 后照它的模板产出 spec、read `to-tickets` 后照它拆 tickets——产出里 `## Problem Statement` / `## Solution` / `## User Stories`（24 条 `As a … I want … so that …`）/ `## Implementation Decisions` / `## Testing Decisions` / `## Out of Scope` 与 `to-tickets` 的 `**What to build:**` / `**Blocked by:**` / `**Status:**` 逐字对齐，并复述了「Existing seams should be preferred」「prior art for the tests」两条规则。改写要点会丢掉这些结构，所以这是可区分的证据。
+
+代价：依赖以**绝对路径**出现在两个文件里，上游换了安装位置就会断。由 `scripts/check-paths.py` 机械校验（`./run-evals.sh` 会跑）。
 
 ## 允许的偏离（除此外任何偏离都算违约）
 
