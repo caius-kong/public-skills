@@ -1,6 +1,6 @@
 {
   "skill_name": "skill-gate",
-  "notes": "Skill-gate extends skill-creator with Context Concise Principles and change-based verification. IDs 1-3 retain the original instruction-review regressions; IDs 4-6 exercise bundled script/config regression and capability-impact selection. Use skill-creator fresh old/revised evaluation, grader and viewer; grade.py and run-converted.sh remain historical supporting tools for IDs 1-3, not authoritative graders for new cases.",
+  "notes": "Skill-gate extends skill-creator with Context Concise Principles and change-based verification. IDs 1-3 retain the original instruction-review regressions; IDs 4-6 exercise bundled script/config regression and capability-impact selection. IDs 8-9 cover document-level editing and lifecycle routing without an initial edit. Use skill-creator fresh old/revised evaluation, grader and viewer; grade.py and run-converted.sh remain historical supporting tools for IDs 1-3, not authoritative graders for new cases.",
   "evals": [
     {
       "id": 1,
@@ -90,6 +90,29 @@
         "Retains the mandatory exact checker invocation and exit-status gate as load-bearing deterministic specificity under the supplied scoped contract.",
         "Deletes or relocates the dated incident and time-saved rationale rather than keeping it as operative instruction.",
         "Does not invent an all-repository/database/uncommitted invariant or claim unexecuted downstream capability evals passed."
+      ]
+    },
+    {
+      "id": 8,
+      "name": "document-structure",
+      "fixture": "document-structure",
+      "prompt_file": "document-structure/prompt.txt",
+      "assertions": [
+        "Returns an executable main path with legacy-import-only reference conditionally separated, without splitting solely to satisfy a size limit.",
+        "Groups restore-token authority, expiration, destination validation and single-use caveats; preserves the remote-write authorization guardrail.",
+        "Uses export.py --help as the source of export defaults instead of retaining the cached chunk size, while retaining unwritten external constraints.",
+        "Replaces report-exists completion with accounting for every requested dataset's success or explicit failure and retry safety; reports instruction behavior evals as unexecuted."
+      ]
+    },
+    {
+      "id": 9,
+      "name": "lifecycle-routing",
+      "fixture": "lifecycle-routing",
+      "prompt_file": "lifecycle-routing/prompt.txt",
+      "assertions": [
+        "Actually reads the installed skill-creator and uses its evaluation/benchmark stage for A without requiring an instruction edit or restarting creation.",
+        "For B uses actual discovery on positive and near-miss tasks, not the previous body-task PASS as trigger evidence; reports unexecuted checks honestly.",
+        "Routes C through skill-creator creation with a no-skill baseline, not an invented old version or the update regression baseline."
       ]
     }
   ]

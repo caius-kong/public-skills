@@ -1,0 +1,22 @@
+[
+  {"id": 1, "split": "development", "query": "把我每周用本地 CSV 核对账目的固定流程做成一个新的 agent skill，输入是两份导出表，结果是差异清单。", "should_trigger": true},
+  {"id": 2, "split": "development", "query": "现有的 invoice-audit skill 对多币种发票支持不好，请更新它的 SKILL.md 并检查改完是否还可靠。", "should_trigger": true},
+  {"id": 3, "split": "held_out", "query": "先不改 invoice-audit 的文件，给它跑现有的 eval，看看目前效果怎样，列出失败样例。", "should_trigger": true},
+  {"id": 4, "split": "development", "query": "比较 invoice-audit 当前发布版与上一版的任务表现，做多次 benchmark 看波动；这次不修改 skill。", "should_trigger": true},
+  {"id": 5, "split": "held_out", "query": "invoice-audit 的正文评测通过了，但 description 经常漏触发、也会误触发。请只优化描述的自动发现能力。", "should_trigger": true},
+  {"id": 6, "split": "development", "query": "skills/alert-dispatch/scripts/choose_target.py 没配目的地时会选第一个聊天，请修复这个 skill 内的脚本，SKILL.md 不变。", "should_trigger": true},
+  {"id": 7, "split": "held_out", "query": "skills/report-export/config.example.json 要换一个默认值，assets/ 模板也要更新；请检查这些 skill 资源变更该怎样验证。", "should_trigger": true},
+  {"id": 8, "split": "development", "query": "给项目 AGENTS.md 和 CLAUDE.md 加上 agent 修改数据库迁移文件时的工作约束，清掉重复规则。", "should_trigger": true},
+  {"id": 9, "split": "held_out", "query": "修改给 coding agent 使用的 prompt template 和按需加载的操作参考文档，让它遇到多环境部署时先确认目标。", "should_trigger": true},
+  {"id": 10, "split": "development", "query": "同事改了 invoice-audit 的 SKILL.md，只跑了一次示例就说能合并。请审查这个 skill 变更的验证证据是否足够。", "should_trigger": true},
+  {"id": 11, "split": "development", "query": "用已安装的 invoice-audit skill 核对这两份账单；不要修改或评估 skill 本身。", "should_trigger": false},
+  {"id": 12, "split": "held_out", "query": "Review src/invoice.ts 的 rounding bug 修复和单元测试是否足够。这是业务应用，不是 agent skill，也没有指令文件变更。", "should_trigger": false},
+  {"id": 13, "split": "development", "query": "把这份给客户看的操作说明润色得更自然，保留事实；它不是给 agent 的指令。", "should_trigger": false},
+  {"id": 14, "split": "held_out", "query": "我们网站的 appsettings.json 默认分页数从 20 改成 50，检查兼容性；项目不涉及 agent 或 skill。", "should_trigger": false},
+  {"id": 15, "split": "development", "query": "帮我找一个已经发布的能转换 Word 文档的 skill，先列候选，不要自己创建或修改 skill。", "should_trigger": false},
+  {"id": 16, "split": "held_out", "query": "给数据库查询做 benchmark，比较两个 SQL 索引方案的延迟和方差，不涉及模型或 skill。", "should_trigger": false},
+  {"id": 17, "split": "development", "query": "我们把用户的工作能力字段命名为 skill_level 了，请 review 这次业务 API 重命名的 PR。", "should_trigger": false},
+  {"id": 18, "split": "held_out", "query": "优化商品页面 meta description，让搜索结果更清楚；不是 skill description，也不改变 agent prompt。", "should_trigger": false},
+  {"id": 19, "split": "development", "query": "请解释什么是 progressive disclosure，给一个菜单设计的例子；不要编辑任何指令文档。", "should_trigger": false},
+  {"id": 20, "split": "held_out", "query": "用 pdf skill 从现有 PDF 提取表格即可；skill 已经安装，这次不做开发、调优或质量评测。", "should_trigger": false}
+]

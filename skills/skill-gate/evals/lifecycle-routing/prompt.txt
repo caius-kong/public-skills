@@ -1,0 +1,7 @@
+Read the supplied skill-gate-SKILL.md, then answer these three independent requests with the appropriate immediate workflow and acceptance evidence. You may read its installed dependency. This is a read-only routing exercise: do not run an LLM, change files, start a viewer or contact services, and do not claim downstream evaluations have run.
+
+A. I already have a skill. Please benchmark its current quality and variability against a frozen prior release; I am not asking for any instruction edits.
+B. This skill misses realistic requests but fires on nearby irrelevant requests. Optimize only its description; the old body-task eval passed. Explain how the evidence should differ from a body-content eval.
+C. Turn my established weekly local-file reconciliation procedure into a new skill. It has no previous version. Explain which workflow owns creation and what baseline applies.
+
+For each request, name the workflow you actually consulted, its next relevant stage, and what evidence remains missing. Do not turn these into three new creation interviews or demand unrelated bundled-code tests.
