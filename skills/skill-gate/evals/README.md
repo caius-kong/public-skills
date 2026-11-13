@@ -4,43 +4,34 @@ Gate behavioral evals use skill-creator's paired execution, evidence-based gradi
 and review viewer. Compare the revised gate with a frozen old version on matched
 inputs; a passing pair is a regression guard, not evidence of improvement.
 
-## Mechanical checks
+## Dependency and resource checks
 
-Two deterministic sweeps over every skill's instruction surface. They enforce the
-rule `../SKILL.md` states under "External skill dependencies" — a rule that a
-per-skill preflight cannot enforce, because a preflight only sees dependencies
-that were declared.
+The runtime gate owns dependency/reference acceptance and invokes its bundled
+`scripts/check-declared-deps.py` and `scripts/check-doc-paths.py` with explicit
+skill directories, including affected callers. Neither script assumes a repository
+layout or publishing state. Exit 0 covers only recognized references in the
+supplied inputs; exit 1 reports problems and exit 2 rejects invalid inputs.
+Semantic invocations, install-command adequacy and loaded-reference paths still
+require the gate's direct review; a static PASS is not full dependency coverage.
 
-```bash
-python3 evals/checks/check-declared-deps.py   # named but never declared under ## Preflight
-python3 evals/checks/check-doc-paths.py      # a named path must resolve
-```
-
-Both exit 1 with a `UNDECLARED` / `MISSING` line per problem. They are the only
-checks in this repo that span skills, so run them after editing any `SKILL.md` or
-`agents/*.md`.
-
-## PASS criteria (mechanical checks)
-
-A gate verdict of ACCEPT requires the two sweeps in `checks/` to be green on the
-change under review, run from the repo root:
+Run the portable checker regression suite from the skill root:
 
 ```bash
-python3 skills/skill-gate/evals/checks/check-declared-deps.py   # exit 0
-python3 skills/skill-gate/evals/checks/check-doc-paths.py       # exit 0
+uv run --no-project python -m unittest discover -s evals -p test_dependency_checks.py
 ```
 
-Either one non-zero, or a report that claims they passed without a transcript
-tool call running them, is FAIL for the change — not a note. They are the only
-checks here that look at skills other than the one under review, so a change that
-breaks a neighbour passes every in-skill eval and still fails the repo.
+Case 10 uses standalone fixtures: an undeclared invocation in a loaded reference,
+a missing declared dependency, and a valid installed helper/resource. Each arm
+gets its own inputs and absolute helper path; prepare them with
+`uv run --no-project python evals/external-dependencies/prepare.py <run-dir>`
+from the skill root. No repo steering is supplied. Require actual checks and separate verdicts, not a paraphrase of the gate.
 
 ## Runtime versus development assets
 
 The runtime instructions are `../SKILL.md`, which delegates capability evaluation
-to the installed skill-creator. It does not load or execute this `evals/` directory
-during ordinary gate use. Prompts, fixture code and assertions here are reusable
-behavioral regression assets for developing skill-gate, not new runtime helpers.
+to the installed skill-creator and uses bundled `scripts/` for dependency checks.
+It does not load or execute this `evals/` directory during ordinary gate use.
+Prompts, fixture code and assertions here are reusable behavioral regression assets for developing skill-gate, not new runtime helpers.
 Raw transcripts, grades, timing and HTML viewers are acceptance artifacts kept in
 the ignored sibling workspace, not shipped as runtime dependencies. Existing
 historical receipts remain records, not prerequisites for using the gate.
@@ -55,6 +46,7 @@ historical receipts remain records, not prerequisites for using the gate.
 | 7 | specificity-contract | Prospective clarification: preserve an exact checker/exit gate under an explicit scoped contract, remove incidental history, and report unexecuted capability evals honestly. |
 | 8 | document-structure | Preserve safety and external constraints while separating branch reference, co-locating rules, removing cached defaults and requiring substantive completion. |
 | 9 | lifecycle-routing | Read skill-creator and select the appropriate stage for standalone benchmarking, description discovery and new-skill creation. |
+| 10 | external-dependencies | Detect undeclared reference invocations, block missing dependencies and accept valid standalone inputs with actual verification. |
 
 Freeze the complete pre-edit skill in the sibling ignored `skill-gate-workspace/`. For each case,
 prepare identical isolated inputs and fresh old/revised executors; provide only
@@ -68,7 +60,7 @@ instruction-routing regression guards. Report single-sample results as smoke
 evidence, not a stability or significance claim.
 
 `run-converted.sh` and `grade.py` below support only historical IDs 1-3. They do
-not execute or grade IDs 4-9, and the legacy regex pre-filter is not an authoritative
+not execute or grade IDs 4-10, and the legacy regex pre-filter is not an authoritative
 grader for free-form reasoning.
 
 ## Discovery checks
@@ -133,7 +125,7 @@ Artifacts follow skill-creator's conventions: `eval-<id>-<name>/eval_metadata.js
 
 | File | Role |
 |---|---|
-| `evals.json` | all 7 eval specs; the legacy runner selects IDs 1-3 |
+| `evals.json` | all eval specs; the legacy runner selects IDs 1-3 |
 | `run-converted.sh` | the single runner (replaces 6 bespoke `run-*.sh`, 672 lines) |
 | `grade.py` | programmatic **pre-filter** only — see the caveat below |
 | `results.json` | the grader's authoritative per-eval verdicts for iteration-1 |

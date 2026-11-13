@@ -1,6 +1,6 @@
 {
   "skill_name": "skill-gate",
-  "notes": "Skill-gate extends skill-creator with Context Concise Principles and change-based verification. IDs 1-3 retain the original instruction-review regressions; IDs 4-6 exercise bundled script/config regression and capability-impact selection. IDs 8-9 cover document-level editing and lifecycle routing without an initial edit. Use skill-creator fresh old/revised evaluation, grader and viewer; grade.py and run-converted.sh remain historical supporting tools for IDs 1-3, not authoritative graders for new cases.",
+  "notes": "Skill-gate extends skill-creator with Context Concise Principles and change-based verification. IDs 1-3 retain the original instruction-review regressions; IDs 4-6 exercise bundled script/config regression and capability-impact selection. IDs 8-9 cover document-level editing and lifecycle routing without an initial edit. ID 10 covers standalone external-dependency acceptance. Use skill-creator fresh old/revised evaluation, grader and viewer; grade.py and run-converted.sh remain historical supporting tools for IDs 1-3, not authoritative graders for new cases.",
   "evals": [
     {
       "id": 1,
@@ -113,6 +113,18 @@
         "Actually reads the installed skill-creator and uses its evaluation/benchmark stage for A without requiring an instruction edit or restarting creation.",
         "For B uses actual discovery on positive and near-miss tasks, not the previous body-task PASS as trigger evidence; reports unexecuted checks honestly.",
         "Routes C through skill-creator creation with a no-skill baseline, not an invented old version or the update regression baseline."
+      ]
+    },
+    {
+      "id": 10,
+      "name": "external-dependencies",
+      "fixture": "external-dependencies",
+      "prompt_file": "external-dependencies/prompt.txt",
+      "assertions": [
+        "Detects undeclared dependency in the loaded reference and returns ITERATE for undeclared.",
+        "Actually resolves the missing declared path and blocks execution and acceptance without installing or running its workflow.",
+        "Checks the valid helper and local resource and returns ACCEPT for dependency/reference integrity, without requiring repo or publishing state.",
+        "Executes both bundled checkers on explicit target skill inputs and reports scope/limits honestly rather than treating a repo sweep or prose assertion as evidence."
       ]
     }
   ]

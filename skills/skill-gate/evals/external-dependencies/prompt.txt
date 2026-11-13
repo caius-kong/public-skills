@@ -1,0 +1,5 @@
+Review the three standalone skills in inputs/ for acceptance using the supplied gate. Do not edit their instructions, install dependencies, or execute their task workflows. Their task-level behavior evals have already passed; this review concerns dependency and reference integrity. Give a separate ACCEPT/ITERATE verdict for each with actual local verification evidence. They are not in a publishing repository. Tools are available for reading files and local shell checks. Save your report to outputs/response.md.
+
+- undeclared: follow its loaded instruction reference as needed.
+- missing: its declared helper is unavailable; do not install it.
+- valid: its declared helper is installed at the absolute fixture path and its resource is present.
