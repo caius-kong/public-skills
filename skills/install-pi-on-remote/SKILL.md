@@ -7,6 +7,12 @@ description: "Deploy a remote macOS Mac as an agents server: configure dedicated
 
 Use this playbook only for macOS Macs, local or remote. Tailscale provides network reachability; macOS Remote Login provides the SSH service. The repository's `~/.pi/bootstrap.sh` owns Pi packages, provider configuration, and API-key setup; Herdr's official installer and CLI own Herdr and its Pi integration.
 
+## Preflight
+
+- `herdr`: `~/.agents/skills/herdr/SKILL.md`
+  - If missing: `npx -y skills add herdrdev/herdr --skill herdr -g -y`（`-y` 必需，否则 CLI 会等确认并把非交互 SSH 运行卡住；已存在时跳过安装、只校验，见 §7）
+  - 用途：Herdr 的 Pi 集成与它自己的 agent skill 都由它提供；本 skill 不复制。
+
 ## Intake: ask once, then run unattended
 
 Ask everything below in **one** message, as a table with defaults pre-filled so the user can answer in one line. After the answer, echo it back as one block and run the whole job without further questions; the only later interruption is a stop condition in the procedure.
