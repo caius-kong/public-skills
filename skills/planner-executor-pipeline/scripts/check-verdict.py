@@ -4,7 +4,9 @@
 An auditor that did not look can still write "no hardcoded values found" and
 be rewarded with PASS. The answer key forces one citation per acceptance, and
 this script checks the citations mechanically: the file must exist, the line
-must exist, and the line must be one the diff actually touched. It cannot tell
+must exist, and the file must be one the diff touched -- an unchanged line
+is legitimate evidence, since proving "existing behaviour is unchanged"
+can only cite a line nobody edited. It cannot tell
 whether the reasoning is honest -- only that the auditor opened the file it
 claims to have judged.
 

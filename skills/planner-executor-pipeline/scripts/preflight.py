@@ -29,6 +29,13 @@ def main():
     if not deps:
         print(f"CANNOT JUDGE: no dependency entries found under {PREFLIGHT!r}")
         return 2
+    # An entry whose shape drifted would be skipped silently, and a skipped entry
+    # reads exactly like a satisfied one.
+    declared = len(re.findall(r"^- `[a-z0-9-]+`:", (SKILL / "SKILL.md").read_text(), re.M))
+    if declared != len(deps):
+        print(f"CANNOT JUDGE: {declared} dependency line(s) declared but only {len(deps)} parsed -- "
+              "an entry does not match the '- `name`: `~/path/SKILL.md`' + '- If missing: `cmd`' shape")
+        return 2
 
     missing = []
     for name, raw, install in deps:

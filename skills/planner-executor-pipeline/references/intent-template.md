@@ -78,4 +78,4 @@ Existing authentication only. （GATE#2）
 
 ## 检查
 
-`python3 scripts/intent-check.py handoffs/plan-handoff.json --require-accepted`（归档时加 flag）。C9 `problem` 必须派生自 `problem_statement` 首句；C0 未定义字段、C1 实现标识、C2 引用新符号、C3 强制者缺失或不存在、C4 `outcome` 变成清单、C5 `not_doing` 是未决问题、C6 无法验证的措辞、C7 `status` 非两态、C8 出现 `open_questions`。回归夹具：`evals/regression/t2/intent-*.json`。
+`python3 <skill>/scripts/intent-check.py handoffs/plan-handoff.json --require-accepted`（归档时加 flag）。C9 `problem` 必须派生自 `problem_statement` 首句；C0 未定义字段、C1 实现标识、C2 引用新符号、C3 强制者缺失或不存在、C4 `outcome` 变成清单、C5 `not_doing` 是未决问题、C6 无法验证的措辞、C7 `status` 非两态、C8 出现 `open_questions`。回归夹具：`evals/regression/t2/intent-*.json`。

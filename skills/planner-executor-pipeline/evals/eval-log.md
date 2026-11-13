@@ -632,3 +632,29 @@ oracle 审完整 diff 给 `FIX_REQUIRED`，B1 属实：`--latest` 用文件 mtim
 **本轮抓到的缺陷（工具侧）**：`herdr-watch.py` 在父会话等子 agent 时**立刻返回**——父的 turn 已结束、状态是 `done`，但 pane 里写着 `subagents still running`。表现是 watchdog 空转、我不断重复读同一屏。修法：pane 出现 `subagents still running` 时不算「需要人」，继续阻塞。已加进 `agent-team/evals`（待补夹具，本轮先用实测验证）。
 
 **它自己指出的余量**：GATE#4「通过数严格递增」可被灌水测试满足；这次靠 AC 命名 + 黑盒 + CONFORMANCE 逐条 answer_key 兜住，不是靠该指标。与既有待办一致。
+
+## Round 26（2026-11-03）— 用 skill-gate 反复验收 pipeline：12 轮，12 轮全 iterate
+
+把「外部依赖改 read」的收尾交给新版 `skill:skill-gate` 验收，每轮都是 fresh context 的独立审查者，我按它的 findings 修。**12 轮没有一轮 accept**，但每一轮的 findings 都是真的，且大多不是文字问题：
+
+| 轮 | 抓到的东西（按危害） |
+|---|---|
+| 1 | 五处仍写"注入"；references-index 残留已删脚本与悬空路径；`handoff`/`domain-modeling` 未声明 |
+| 2 | 漏掉的第五处"注入"（我的 grep 模式写窄了）；README 数量不符；可见性快照过期 |
+| 3 | 声称"缺依赖 run 前就失败"但机制里没有这一环；README 目录树缺 3 个文件 |
+| 4 | `gate.py` 读 `state["base"]` 而契约是 `base_sha` → 合规 state 直接崩，崩溃 exit 1 被当成 FIX_EXECUTE；未读 `authorized_test_edits`；`verified_protected` 后门；"不降" vs 严格增 |
+| 5 | 契约产物名是 `pipeline-state.json`，脚本只认 `state.json` → **合规运行永远拿不到裁决**；`gate.py` 在指令面从未出现（GATE 仍在让父会话按散文自拟） |
+| 6 | `sys.excepthook` 装在 `sys.argv[1]` 之后（无参 → exit 1 = 假裁决）；旧证据删除排在输入检查之后 |
+| 7 | #6 只看 `tickets[0]`（多票计划的第二张票无人检查）；采集期失败被当交付缺陷；`check-paths` 不扫 `agents/*.md` |
+| 8 | 任何失败一律 FIX_EXECUTE，而契约规定 #4–#7 → REPLAN（#6 明写不得指向 EXECUTE）；`python3 scripts/gate.py` 在目标仓库 cwd 下不可执行 |
+| 9 | env_flake 与 answer_key 口径在四处文档里仍是旧规则 |
+| 10 | `check-verdict.py` docstring 我上一条 commit **声称改了但文件不在提交里**（替换没匹配上，我信了提交信息） |
+| 11 | #2 去向契约内两处矛盾；BASE 计数采集不到时判 TA 缺陷；#6/#7 漏 `*.test.*`/`*.spec.*`；verdict 夹具引用 hunk 内的行（测不出旧规则） |
+| 12 | **`pi-adapter.md` 第二张绑定表把 TEST_AUTHOR/EXECUTE 写成内置 `worker`** → 守卫扩展不加载，边界强制 fail-open；`.spec.ts` 让 ast 解析崩溃 |
+
+**结论**：这 12 轮的收益几乎全在"脚本与契约不一致"和"检查器只会 PASS / 把崩溃当裁决"这两类，正是本轮工作一开始认定的唯一薄弱点。**文字层面的收尾在 3 轮内完成，剩下 9 轮都在挖 gate.py 的语义缺陷**——说明「契约写散文、脚本另写一份实现」这个结构本身在持续产出偏差，每次只能靠人肉对照发现。
+
+**未修/待决**（记录在案，不是遗忘）：
+- GATE #4「用例数不降」仍可被灌水测试满足（靠 AC 命名 + 黑盒 + CONFORMANCE answer_key 兜）。
+- `state` 是封闭字段清单，但没有脚本校验形状（只有 gate.py 读的那几个字段会被隐式验证）。
+- 12 轮都在 `skill-gate` 的"表述与机制一致"项上失败；该项没有机械检查器，只能靠审查者逐条对照。

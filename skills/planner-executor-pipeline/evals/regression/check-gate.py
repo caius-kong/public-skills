@@ -60,7 +60,7 @@ def build(root, name="good", *, acceptance=("AC1: f() returns 1.",), allowed=Non
     (h / "plan-handoff.json").write_text(json.dumps(plan))
     (h / "test-handoff.json").write_text(json.dumps({"commit": ta, "test_files": list(test_files)}))
     (h / "execute-handoff.json").write_text(json.dumps({"commit": execute, "base_commit": ta}))
-    (h / "state.json").write_text(json.dumps({"base": base, "verified_protected": [], "orchestrator_commits": []}))
+    (h / "pipeline-state.json").write_text(json.dumps({"base_sha": base, "orchestrator_commits": []}))
     return repo, h, base, execute
 
 
@@ -69,9 +69,9 @@ def add_archive(repo, h):
     (repo / "docs/specs").mkdir(parents=True)
     (repo / "docs/specs/x.md").write_text("# record\n")
     sha = commit(repo, "docs(spec): record")
-    state = json.loads((h / "state.json").read_text())
+    state = json.loads((h / "pipeline-state.json").read_text())
     state["orchestrator_commits"] = [{"commit": sha, "files": ["docs/specs/x.md"], "reason": "archive"}]
-    (h / "state.json").write_text(json.dumps(state))
+    (h / "pipeline-state.json").write_text(json.dumps(state))
     return sha
 
 
@@ -114,7 +114,7 @@ def _bad_freeze(root):
     return repo
 
 
-@case("bad-antigaming", 1, "6 anti-gaming")
+@case("bad-antigaming", 3, "6 anti-gaming")
 def _bad_antigaming(root):
     repo, h, _, _ = build(root, "bad-antigaming")
     plan = json.loads((h / "plan-handoff.json").read_text())
@@ -131,16 +131,79 @@ def _bad_testcmd(root):
     return repo
 
 
-@case("bad-chain", 1, "5 handoff SHA")
+@case("bad-chain", 3, "5 handoff SHA")
 def _bad_chain(root):
     repo, h, _, _ = build(root, "bad-chain")
-    state = json.loads((h / "state.json").read_text())
-    state["base"] = git(repo, "rev-parse", "HEAD")      # BASE == HEAD: no ancestry to speak of
-    (h / "state.json").write_text(json.dumps(state))
+    state = json.loads((h / "pipeline-state.json").read_text())
+    state["base_sha"] = git(repo, "rev-parse", "HEAD")   # BASE == HEAD: no ancestry to speak of
+    (h / "pipeline-state.json").write_text(json.dumps(state))
     return repo
 
 
-@case("bad-seam", 1, "7 seam match")
+@case("cannot-judge-no-base", 2, "CANNOT JUDGE")
+def _no_base(root):
+    repo, h, _, _ = build(root, "no-base")
+    state = json.loads((h / "pipeline-state.json").read_text())
+    for key in ("base_sha", "base"):
+        state.pop(key, None)
+    (h / "pipeline-state.json").write_text(json.dumps(state))
+    return repo
+
+
+@case("cannot-judge-broken-json", 2, "CANNOT JUDGE")
+def _broken_json(root):
+    repo, h, _, _ = build(root, "broken-json")
+    (h / "plan-handoff.json").write_text("{ broken")
+    return repo
+
+
+@case("replan-second-ticket-ac", 3, "6 anti-gaming")
+def _second_ticket(root):
+    """Check 6 must look at every ticket, not just the first."""
+    repo, h, _, _ = build(root, "second-ticket")
+    plan = json.loads((h / "plan-handoff.json").read_text())
+    plan["tickets"].append({"id": "T2", "title": "second", "acceptance": ["AC9: nothing tests this"],
+                            "depends_on": [], "files": [], "seam": "s1"})
+    (h / "plan-handoff.json").write_text(json.dumps(plan))
+    return repo
+
+
+@case("cannot-judge-env-flake", 2, "env_flake")
+def _env_flake(root):
+    """A suite that fails during import is an environment flake, not a delivery
+    defect: it must not route back to EXECUTE."""
+    repo, h, _, _ = build(root, "env-flake")
+    (repo / "tests/test_flake.py").write_text("import not_a_real_package_xyz\n")
+    return repo
+
+
+@case("replan-file-predates-stage", 3, "2 diff within allowed_paths")
+def _predates(root):
+    """An out-of-bounds file that existed before TEST_AUTHOR cannot be undone by
+    EXECUTE, so it routes to REPLAN rather than FIX_EXECUTE."""
+    repo, h, _, _ = build(root, "predates")
+    # Rewrite the sequence: add the stray file before the TA commit, then touch it
+    # after, so it shows up in BASE..HEAD without having been created by EXECUTE.
+    git(repo, "reset", "-q", "--hard", "HEAD~2")
+    (repo / "src/stray.py").write_text("earlier round\n")
+    commit(repo, "earlier round adds a stray file")
+    (repo / "tests/test_m.py").write_text(TEST_SRC)
+    ta = commit(repo, "T1: freeze tests")
+    (repo / "src/m.py").write_text(IMPL)
+    (repo / "src/stray.py").write_text("earlier round, touched now\n")
+    execute = commit(repo, "T1: implement")
+    plan = json.loads((h / "plan-handoff.json").read_text())
+    plan["allowed_paths"] = ["src/m.py", "tests/test_m.py"]
+    (h / "plan-handoff.json").write_text(json.dumps(plan))
+    (h / "test-handoff.json").write_text(json.dumps({"commit": ta, "test_files": ["tests/test_m.py"]}))
+    (h / "execute-handoff.json").write_text(json.dumps({"commit": execute}))
+    state = json.loads((h / "pipeline-state.json").read_text())
+    state["base_sha"] = git(repo, "rev-parse", "HEAD~3")
+    (h / "pipeline-state.json").write_text(json.dumps(state))
+    return repo
+
+
+@case("bad-seam", 3, "7 seam match")
 def _bad_seam(root):
     repo, h, _, _ = build(root, "bad-seam")
     (repo / "tests/test_m.py").write_text(
@@ -181,9 +244,17 @@ def run_verdict(repo, verdict):
 
 @verdict_case("verdict-unchanged-line", 0, None)
 def _v_ok(root):
-    """Citing a line the diff did NOT change is legitimate: proving 'unchanged' needs it."""
+    """Citing a line the diff did NOT change is legitimate: proving 'unchanged' needs it.
+
+    The citation is deliberately outside every hunk, so a regression to the old
+    line-level rule fails here instead of passing quietly.
+    """
     repo, h, _, _ = build(root, "verdict-ok")
-    return repo, _verdict(repo)
+    # The cited line must be outside every hunk of the file the diff touches, or a
+    # regression to the old line-level rule would pass this fixture too.
+    (repo / "src/m.py").write_text("def f():\n    return 1\n" + "\n" * 10)
+    commit(repo, "pad the file so the citation sits outside the hunk")
+    return repo, _verdict(repo, evidence="src/m.py:10")
 
 
 @verdict_case("verdict-untouched-file", 1, None)
@@ -206,7 +277,7 @@ def main():
             repo = build_fn(root)
             rc, out = run(repo, review)
             failing = [l.split(":")[0].replace("FAIL  ", "") for l in out.splitlines() if l.startswith("FAIL")]
-            ok = rc == expect_rc and (expect_failed is None or expect_failed in failing)
+            ok = rc == expect_rc and (expect_failed is None or expect_failed in failing or expect_failed in out)
             print(f"{'PASS' if ok else 'FAIL'}  {name:<16} exit={rc} want={expect_rc} failing={failing or 'none'}")
             if not ok:
                 bad.append(f"{name}: exit={rc} want={expect_rc} failing={failing} :: {out.strip()[:200]}")

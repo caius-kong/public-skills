@@ -19,7 +19,7 @@ A prompt-driven workflow: the parent orchestrates stages and passes contract art
 
 ## Preflight
 
-本 skill 编排的每个外部 skill 都按已安装路径 read 使用；仓库里不放任何副本。
+外部 skill 一律 read 已安装路径，仓库里不放副本。
 
 - `grilling`: `~/.agents/skills/grilling/SKILL.md`
   - If missing: `npx skills add mattpocock/skills --skill grilling -g -y`
@@ -38,7 +38,7 @@ A prompt-driven workflow: the parent orchestrates stages and passes contract art
 - `domain-modeling`: `~/.agents/skills/domain-modeling/SKILL.md`
   - If missing: `npx skills add mattpocock/skills --skill domain-modeling -g -y`
 
-路径由仓库根的 `run-evals.sh` 机械校验；缺任何一个，run 之前就失败，不会跑到一半才发现。
+Pre-flight 第 0 步跑 `python3 <skill>/scripts/preflight.py`：它解析上表每条路径，缺哪个就打印对应安装命令并以非零退出，依赖不全不得开跑。
 
 ## 节点序
 
@@ -55,7 +55,7 @@ EVIDENCE? ─→ PLAN ─→ TEST_AUTHOR ─→ EXECUTE(逐票) ─→ GATE ─�
 
 **唯一权威 = `handoffs/pipeline-state.json`**（gitignored）。父会话每个事件后用固定命令写回、每次派发前重读——**禁止凭对话记忆计数或推进**。计数器由 state 文件 owns，禁止跳步或无 handoff 依据的状态推进。
 
-state 为**封闭字段清单**（不得省略；新增字段须同时更新此处与校验规则）：
+state 为**封闭字段清单**（不得省略；新增字段须同时更新此处）：
 
 ```json
 {
@@ -71,7 +71,9 @@ state 为**封闭字段清单**（不得省略；新增字段须同时更新此�
   "base_sha": "",
   "brief_path": "",
   "authorized_test_edits": [],
-  "orchestrator_commits": []
+  "orchestrator_commits": [],
+  "test_command": "",
+  "merge_mode": "direct|branch"
 }
 ```
 
@@ -99,7 +101,7 @@ state 为**封闭字段清单**（不得省略；新增字段须同时更新此�
 |---|---|---|---|
 | `needs_research` | PLAN 判定证据包不足 | 进 `EVIDENCE`，产出证据包后 **fresh 重派 PLAN** | `research_round` 2 轮；超限 → 升级为用户访谈或 HALTED |
 | `plan_revision_round` | 用户拒绝冻结、要求修订 | 回 PLAN 修订 | **3 次**；超限 → HALTED（防活跃迭代无限重付最贵模型） |
-| `契约外提交` | GATE 发现 diff 含无 ticket 归属的文件（父会话提交/生命周期变更） | 已登记于 `orchestrator_commits` → 放行并记录；未登记 → **REPLAN**（让 PLAN 重定义 allowed_paths 追认）或 HALTED（人工裁决） | 计入 replan_round / 直接 HALTED |
+| `契约外提交` | GATE 发现 diff 含无 ticket 归属的文件（父会话提交/生命周期变更） | 已登记于 `orchestrator_commits` → 放行并记录；未登记且由产出该提交的阶段可撤 → **FIX_EXECUTE**；越界源于更早轮或父会话提交（阶段无权撤）→ **REPLAN**（重定义 allowed_paths）或 HALTED | 计入 replan_round / 直接 HALTED |
 | `blocked_on_interview` | A native request expires or the user cancels | If PLAN returns a handoff, retain the unresolved questions; a hard termination may produce none | No interview-turn limit; the PLAN run has its 24-hour deadline |
 | `REPLAN` | Gate 判定契约缺陷 / Conformance 判 REPLAN / **Execute 失败且 attempts 耗尽** | `replan_round++`，回 PLAN | >3 → **HALTED** |
 | `FIX_EXECUTE` | Gate 判**未授权**测试被改 / Conformance 判硬编码空壳 | 回 EXECUTE：**指向 violation 证据定位的票；无法定位时指回最后完成票**（不得指向越界 cursor）。**注意**：EXECUTE 被禁止改测试——若 violation 的修复动作本身需要改测试，则 FIX_EXECUTE 无合法动作，应直接走 `REPLAN`（契约/测试缺陷）或 `HALTED`（需人工裁决），不得反复派发空任务 | 计入该票 attempts |
@@ -228,6 +230,8 @@ Agent(description="<节点名>", prompt="<组装结果>", model=@<节点符号>)
 
 ## GATE（父会话 · 确定性 · 无 subagent · 不可跳过）
 
+- **唯一执行方式**：`python3 <skill>/scripts/gate.py <repo> [--review-acs ACn,...]`（`<skill>` = 本 skill 的安装目录）。七项检查的全部逻辑在这个脚本里；不要照 `references/artifacts.md` 的散文自行重算。
+- **读退出码**：0 = PASS；1 = FIX_EXECUTE（实现缺陷，#1–#3，失败项见输出与 `handoffs/gate-evidence.json`）；2 = CANNOT JUDGE（输入缺失、脚本崩溃或环境抖动 `env_flake`——**不是**裁决，修输入/换干净环境后重跑）；3 = REPLAN（测试或契约缺陷 #4–#7，EXECUTE 无权修）。
 - **职责**：机械核验，**不采信任何理由**。检查项与产出见 `references/artifacts.md`。
 
 ## CONFORMANCE（审计型 · 只读 · Gate 绿后）
@@ -236,7 +240,7 @@ Agent(description="<节点名>", prompt="<组装结果>", model=@<节点符号>)
 - **输入**：`handoffs/impl.diff`（父会话落盘，覆盖 `BASE_SHA..HEAD`）、`BASE_SHA` 与 `HEAD`、变更文件清单、`allowed_paths`、冻结测试路径清单。审计 agent 的 diff 工具不覆盖已提交范围，其只读面也不保证含 `.git`；缺这些输入它会（正确地）自陈限制，而不是声称审过。
 - **禁令**：只读——不改代码、不代为实现；证据不足时如实报告限制，不推断。
 - **输出**：Verdict：`PASS` / `FIX_EXECUTE` / `REPLAN`（`references/artifacts.md`），必须带 `answer_key`（逐条 acceptance 的代码位置与理由）与 `rerun`（独立重跑结果或缺什么）。空泛的「未发现硬编码」不算回答。
-- **不许只报结论**：`answer_key` 的 `evidence` 由父会话用 `scripts/check-verdict.py` 机械校验（文件存在、行号在 `impl.diff` 触及范围内）；校验不过按 `dispatch_failures` 重派。
+- **不许只报结论**：`answer_key` 的 `evidence` 由父会话用 `<skill>/scripts/check-verdict.py` 机械校验（文件存在、行号在 `impl.diff` 触及的**文件**内（不要求落在改动行上：证明「既有行为不变」必须能引用未改动的行））；校验不过按 `dispatch_failures` 重派。
 - **canary 校准**：`findings` 为空即可 `PASS`，而"不查"是最省力的满足方式。每次流水线运行至少一次，用注入已知作弊的仓库副本、同模型同 prompt 派发本节点，必须报 `FIX_EXECUTE`；报 `PASS` → 该节点本轮不可信，正式结论降级（流程见 `references/artifacts.md`）。
 
 # 三、跨节点规则
@@ -256,6 +260,7 @@ Agent(description="<节点名>", prompt="<组装结果>", model=@<节点符号>)
   - EXECUTE：`受保护（不得写入）：${protected_paths}（本任务指定产出的 handoff artifact 除外，如 execute-handoff.json；plan-handoff.json 契约文件始终不可改写）`。
   - TEST_AUTHOR：`受保护（不得写入）：${protected_paths 去掉测试路径后的剩余项}（测试路径与 test-handoff.json 是本节点的交付物，必须写入并提交；plan-handoff.json 契约文件始终不可改写）`。测试目录常同时出现在 `protected_paths` 里——那是给 EXECUTE 的约束，不得照抄给本节点。
 - **Pre-flight（父会话，一次性）**：
+  0. `python3 <skill>/scripts/preflight.py` —— 非零退出就停，按它打印的命令装依赖（见 `## Preflight`）；
   1. 未提交代码先 commit（用户 y/n）；
   2. 固化 `BASE_SHA = git rev-parse HEAD`（**禁止手抄** `--oneline` 前缀拼 SHA）；
   3. 写初始 state 文件：默认 `stage=PLAN`；若 pre-flight 判定预研不足则 `stage=EVIDENCE`（两者互斥，不冲突）。

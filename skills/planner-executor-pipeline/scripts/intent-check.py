@@ -129,13 +129,13 @@ def main(argv):
     try:
         plan = json.loads(plan_path.read_text())
     except Exception as e:
-        print(f"UNKNOWN: 读不到 plan-handoff: {e}"); return 2
+        print(f"CANNOT JUDGE: 读不到 plan-handoff: {e}"); return 2
     if "--intent-file" in argv:
         intent = json.loads(pathlib.Path(argv[argv.index("--intent-file") + 1]).read_text())
     else:
         intent = (plan.get("spec") or {}).get("intent")
         if intent is None:
-            print("UNKNOWN: plan-handoff 里没有 spec.intent"); return 2
+            print("CANNOT JUDGE: plan-handoff 里没有 spec.intent"); return 2
     # Same rule as gate.py: take the leading identifier, whatever separator follows.
     # Splitting on a colon here made "AC1 <text>" (no colon) parse to the whole
     # string, so every other reference looked unknown -- a false FAIL on a
@@ -162,4 +162,4 @@ if __name__ == "__main__":
     try:
         sys.exit(main(sys.argv))
     except Exception as e:
-        print(f"UNKNOWN: 检查器自身异常 {e}"); sys.exit(2)
+        print(f"CANNOT JUDGE: 检查器自身异常 {e}"); sys.exit(2)

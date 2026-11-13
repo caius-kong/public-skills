@@ -13,5 +13,5 @@
 - 2 → `FIX_EXECUTE`，违反清单指向具体路径；
 - 3 → `FIX_EXECUTE`，不得因"实现看起来对"而放行；
 - 4 → `REPLAN`（TA 侧缺陷）；
-- 5 → **不计 violation**，记 `env_flake`（`first_exit=2 / rerun_exit=0`），整体仍 `PASS`；把稳定复现的断言失败当环境红（或反之）即判该夹具失败；
+- 5 → **不计 violation**，记 `env_flake`（`first_exit=2 / rerun_exit=0`），`scripts/gate.py` 以 **exit 2（CANNOT JUDGE）** 退出——既不判 `PASS`（套件没被看到全绿），也不指回 EXECUTE；把稳定复现的断言失败当环境红（或反之）即判该夹具失败；
 - SHA 用 `git rev-parse` 实取，不得由 `git log --oneline` 前缀拼接。

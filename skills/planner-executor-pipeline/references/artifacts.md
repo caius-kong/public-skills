@@ -22,7 +22,7 @@ handoff 以文件落盘 `handoffs/*.json`（gitignored）；子 agent 最终响�
   - **测试函数名必须含对应 AC id**（`test_ac7_...`）：GATE 由函数名推导「每条 acceptance 是否有测试」，**不采信 `ac_coverage` 自报**——自报只作旁证，两者不一致时以文件为准并记为可疑。
 - **ExecuteHandoff**：`ticket`、`commit`、`test_output_summary`、`attempts`、`ambiguities`（可空：待决问题）
 - **Verdict**：`verdict`(**严格三值之一**：`PASS`/`FIX_EXECUTE`/`REPLAN`；`CHEAT`/`BLOCK`/`APPROVE` 等自造值 → 原样退回并计 `dispatch_failures`)、`reasons`、`findings`、`answer_key[{acceptance,evidence,reasoning}]`、`rerun{command,result}`。
-  - `answer_key`：**逐条** acceptance 给三项——`evidence` 是「证明这条被真实实现」的代码位置（`path:line`，必须在 `impl.diff` 触及的行内）；`reasoning` 一句话说明为什么这行不是特判/常量映射。任何一条缺 `evidence` 或位置落在 diff 之外 → Verdict 无效（按 `dispatch_failures` 计并重派），**不得以「未发现硬编码」的空泛叙述代替**。
+  - `answer_key`：**逐条** acceptance 给三项——`evidence` 是「证明这条被真实实现」的代码位置（`path:line`，必须在 `impl.diff` 触及的**文件**内（引用未改动的行是合法证据：证明既有行为不变只能这么写））；`reasoning` 一句话说明为什么这行不是特判/常量映射。任何一条缺 `evidence` 或位置落在 diff 之外 → Verdict 无效（按 `dispatch_failures` 计并重派），**不得以「未发现硬编码」的空泛叙述代替**。
   - `rerun`：审计者独立重跑 `test_command` 的结果；没有 shell 时写 `{"command": null, "result": "not run: <缺什么>"}`，并在 `reasons` 里说明结论依赖谁给的证据。
   - 为什么要这份 answer key：`findings` 为空就能拿 `PASS`，而"找不到问题"的最省力实现就是不去找。逐条必答把"没审"从产出里显形——`evidence` 行号由父会话机械校验（见 `scripts/check-verdict.py`）。
 
@@ -72,9 +72,9 @@ handoff 以文件落盘 `handoffs/*.json`（gitignored）；子 agent 最终响�
 
 ## GATE 检查项（确定性机械核验，不采信任何理由）
 
-1. `test_command` 退出码 0。**非 0 时要先分清环境红与逻辑红**：原样重跑一次；两次结果不一致，或失败发生在采集/导入阶段（`ModuleNotFoundError`、`ImportError`、`ERROR ... in collection`、插件/版本告警）→ 记为 `env_flake`，不计 violation、也不进 `attempts`（换个干净环境重跑即可）；两次一致且失败指向断言 → 按逻辑红处理。
+1. `test_command` 退出码 0。**非 0 时要先分清环境红与逻辑红**：原样重跑一次；两次结果不一致，或失败发生在采集/导入阶段（`ModuleNotFoundError`、`ImportError`、`ERROR ... in collection`、插件/版本告警）→ 记为 `env_flake`，不计 violation、也不进 `attempts`（换个干净环境重跑即可）；`scripts/gate.py` 对这类输入以 **exit 2（CANNOT JUDGE）** 退出，既不判 PASS 也不指回 EXECUTE；两次一致且失败指向断言 → 按逻辑红处理。
    基线可从 `git archive <BASE_SHA> | tar -x -C <临时目录>` 解出的临时树复现——`BASE` 也红就是环境问题，不是本次提交造成的。
-2. `BASE..HEAD` 累计 diff ∈ allowed_paths。**例外**：出现在 `state.orchestrator_commits` 中的提交（父会话生命周期变更，如 .gitignore/配置）按登记放行并记录；未登记者视为违规 → REPLAN（追认边界）或 HALTED（人工裁决）；
+2. `BASE..HEAD` 累计 diff ∈ allowed_paths。**例外**：出现在 `state.orchestrator_commits` 中的提交（父会话生命周期变更，如 .gitignore/配置）按登记放行并记录；未登记者视为违规：若该文件由产出它的阶段可撤（`TA..HEAD` 之间新增）→ FIX_EXECUTE；若早于该阶段（阶段无权撤）→ REPLAN（追认边界）或 HALTED（人工裁决）；
 3. **测试冻结核查（先查授权，再判违规）**：从 test-handoff.json 实取 commit/test_files，取 `git diff <TA_commit>..HEAD -- <test_files>` 的变更。
    - **变更集为空** → PASS；
    - **变更集全部落在 `state.authorized_test_edits` 内**（逐文件核对且 commit 可追溯）→ PASS，但须在 gate-evidence 中记录为「已授权测试修改」；
@@ -90,7 +90,7 @@ handoff 以文件落盘 `handoffs/*.json`（gitignored）；子 agent 最终响�
 | 检查项违反 | 去向 |
 |---|---|
 | #1 `test_command` 非 0 退出 | FIX_EXECUTE（实现缺陷，指回相关票） |
-| #2 diff 越界 allowed_paths | 已登记于 `orchestrator_commits` → 放行并记录；否则 FIX_EXECUTE；若越界源于更早轮的已提交文件 → REPLAN（契约需重定义边界） |
+| #2 diff 越界 allowed_paths | 已登记于 `orchestrator_commits` → 放行并记录；未登记且由本阶段引入（`TA..HEAD` 新增）→ FIX_EXECUTE；早于本阶段 → REPLAN（契约需重定义边界）或 HALTED。`scripts/gate.py` 用 `git log --diff-filter=A` 判定引入轮次并据此选退出码 |
 | #3 未授权的测试冻结破坏 | FIX_EXECUTE；若修复需改测试（协议缺陷）→ REPLAN 或 HALTED（见检查项 #3 分支） |
 | #4 冻结强度下降/跳过参数 | REPLAN（TA 侧缺陷） |
 | #5 handoff SHA 不符 | REPLAN（契约/记录不一致） |

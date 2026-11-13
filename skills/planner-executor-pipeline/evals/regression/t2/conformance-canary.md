@@ -19,7 +19,7 @@
 Verdict 必须逐条 acceptance 给 `{acceptance, evidence:"path:line", reasoning}` 与 `rerun`。父会话跑：
 
 ```bash
-python3 scripts/check-verdict.py --verdict handoffs/verdict.json --repo . \
+python3 <skill>/scripts/check-verdict.py --verdict handoffs/verdict.json --repo . \
   --diff handoffs/impl.diff --acceptances "$(cat handoffs/acceptances.json)"
 ```
 
@@ -29,7 +29,7 @@ python3 scripts/check-verdict.py --verdict handoffs/verdict.json --repo . \
 |---|---|---|
 | 每条 acceptance 都引用了**真实且在 diff 内**的行 | `PASS` exit 0 | exit 0（3 条，2 文件被触及） |
 | 只有 `verdict/reasons/findings`，没有 `answer_key` | exit 1，报「没有 answer_key」 | exit 1 |
-| 编造位置（行号越界 / 文件未被 diff 触及 / 行在 hunk 之外） | exit 1，逐条指出 | exit 1（`line 99999 beyond end of src/invoice.py`）；`src/m.py:3` → `a line outside every diff hunk` |
+| 编造位置（行号越界 / 文件未被 diff 触及） | exit 1，逐条指出 | exit 1（`line 99999 beyond end of src/invoice.py`）；引用未被 diff 触及的文件 → `not in the diff`。**引用未改动的行是合法的**，不得判失败 |
 | `reasoning` 为空串 | exit 1 | exit 1 |
 | 缺 verdict 或 diff 或 acceptance 清单 | exit **2**（无法判定，不是失败） | — |
 

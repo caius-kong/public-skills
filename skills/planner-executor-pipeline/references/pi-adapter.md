@@ -52,8 +52,8 @@
 |---|---|---|
 | EVIDENCE | `scout`（仓内）/ `researcher`（仓外） | scout 有 `grep/ls/find/bash/write`；researcher 有 `web_*` 但**无 shell**，查不了仓库。**仓外一半必须 `async: true`**：`web_*` 是环境扩展工具，前台子进程不加载（实测前台派发全部工具不可用、直接失败） |
 | PLAN | `plan`（用户目录专用定义） | 只读工具面 + 访谈通道；内置 `oracle` 的目标函数是保护既有决策，与 PLAN「产生新决策」冲突 |
-| TEST_AUTHOR | `worker` | 有 `edit/write/bash`，单 commit 提交测试资产 |
-| EXECUTE | `worker` | 单写手；其系统提示的「未获批准的决定停下上报」与本协议一致 |
+| TEST_AUTHOR | `test-author`（skill 内 `agents/test-author.md`） | 有 `edit/write/bash`，单 commit 提交测试资产；`guard-test-author.js` 只许写测试 |
+| EXECUTE | `executor`（skill 内 `agents/executor.md`） | 单写手；`guard-execute.js` 只许写 `allowed_paths`、禁改测试 |
 | CONFORMANCE | `reviewer` | 只读（无 `edit/write/bash`）；`watchdog_diff` **不检查已提交范围**，必须由父会话提供 diff artifact |
 
 内置 agent 的系统提示提供耐久纪律，阶段契约走 user 消息，两者并存、互不覆盖。沿用它们即继承其 prompt，而它们随扩展升级变化：扩展一升级，之前的行为结论就不再自动成立。
@@ -85,7 +85,7 @@ PLAN 例外且唯一：只允许直接异步单代理启动（不要前台 PLAN�
 - **回执落地方式（实测）**：权威通路是原生 channel 的答复文件 `replies/<requestId>.json`（扩展源码原话 "The reply file is authoritative"）——父会话把用户原话写进该文件即可投递。`subagent({action:"steer"})` 对阻塞在 ask 上的子 agent **只排队不投递**（排队后仍 blocked）；`subagent_supervisor({action:"reply"})` 在部分会话不可用。**三条都不通 → 硬能力「PLAN 运行中访谈」缺失，按 HALTED 处理**，不得静默跳过访谈或替用户作答。
 
 ```yaml
-# 写在 agent 定义的 frontmatter 里（如 ~/.pi/agent/agents/plan.md），
+# 写在 agent 定义的 frontmatter 里（如本 skill 的 agents/plan.md），
 # 不能作为 dispatch 参数：subagent 工具会拒绝 unknown options key。
 subagentOnlyExtensions:
   - ~/.pi/agent/skills/planner-executor-pipeline/extensions/plan-interview-channel-timeout.js
